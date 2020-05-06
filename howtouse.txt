@@ -1,0 +1,35 @@
+Website Link: http://ctracing.datalab.buet.io/
+
+Objective:
+To be able to trace movement of Covid19 infected persons and those who came in contact with them.
+
+Data:
+In users.txt file, there are a list of (mobile numbers, User Ids) whose data is stored in our database. You can use the site by clicking:
+
+Mobility Tracing:
+1. Enter a mobile number/User Id into the input box to see it's visited locations, time spent and frequency of visits to respective locations
+2. Upload a .txt file with a number of individual User Ids(have to be present in users.txt file) separated by new line to see their visited locations, time spent and frequency of visits to respective locations
+
+Contact Tracing:
+1. Enter a mobile number/User Id into the input box to see the trajectory and User Ids of persons that came in contact.
+2. Upload a .txt file with a number of individual User Ids(have to be present in users.txt file) separated by new line to see the trajectories and User Ids of persons that came in contact.
+
+Heatmap:
+Shows the locations visited by all the Covid19 infected persons present in the database.
+
+
+
+N.B : 
+Radius of circle is determined by Time Spent(bigger radius means more time spent)
+Opacity is determined by Frequency of Visits made(more opaque means higher frequency of visits)
+
+
+
+
+
+
+
+
+
+
+

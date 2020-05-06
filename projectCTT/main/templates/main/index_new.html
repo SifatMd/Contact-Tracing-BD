@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+
+    <!-- Leaflet and Plugins -->
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.6.0/leaflet.css">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.6.0/leaflet-src.js"></script>
+
+    
+    <script src="https://code.jquery.com/jquery-2.2.4.js" integrity="sha256-iT6Q9iMJYuQiMWNd9lDyBUStIq/8PuOW33aOqmvFpqI=" crossorigin="anonymous"></script>
+    
+
+
+    
+
+    <script src="media/jquery_input_file_change.js"></script>
+
+    <style type="text/css">
+    	html, body {
+	        height: 100%;
+	      } 
+    	.container { 
+			  width: 100%;
+	          height: 100%;
+	          margin: 0px 0px 0px 0px;
+	          padding: 0px 0px 0px 0px; 
+		  }
+		#map {width: 100%;
+            height: 100%;}
+    </style>
+
+    <!--For adding Data Tables -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.css">
+
+    <title>BUET Contact Tracing</title>
+
+
+
+</head>
+<body>
+	<!-- Navbar -->
+	<div class="container col-12">
+	  	<nav class="navbar navbar-dark bg-dark" style="margin: 0px 0px 0px 0px; padding: 0px 0px 0px 18px; height: 7%;">
+	  		<a href="#" class="navbar-brand" style="margin: 0px 0px 0px 0px; padding: 0px 0px 0px 0px;">
+	  			BUET Contact Tracing
+	  		</a>
+	  		<ul class="navbar-nav" style="flex-direction: row; margin-right: 20px; font-size: 110%;">
+	  			<li class="nav-item" style="margin: 10px 0px 0px 0px; position: absolute; right: 40%;">
+	  				<p style="color: white; margin: 0px; padding:0px; text-align: center;">
+	  					{% if map_mode == 'covid19trace'%}
+	  						{% if file_name == None %}
+	  							Mobility Tracing for User {{inputinfo}}
+	  						{%else%}
+	  							Mobility Tracing for file {{file_name}}
+	  						{% endif %}
+	  					{% elif map_mode == 'contact tracing' %}
+	  						{% if file_name == None %}
+	  							Contact Tracing for User {{inputinfo}}
+	  						{%else%}
+	  							Contact Tracing for file {{file_name}}
+	  						{% endif %} 
+	  					{% endif %}
+
+	  				</p>
+	  			</li>
+	  			<li class="nav-item" style="margin-right: 20px;">
+	  				<a href="#" class="nav-link">HomePage</a>
+	  			</li>
+	  			<li class="nav-item">
+	  				<a href="/heatmap" class="nav-link" style="color: white;">HeatMap</a>
+	  			</li>
+	  		</ul>
+	  	</nav>
+
+	  	<!-- New Layout -->
+	  	<div class="row" style="height: 93%; margin: 0px 0px 0px 0px;">
+		  	<div class="col-8" id="map">
+		 		<!--  style="border-radius: 5px; border: 1px solid black;"  -->	
+		 	</div>
+
+		 	<!-- Input layout -->
+		 	<div class="col-4">
+		 		<form method="post" enctype="multipart/form-data">
+		 			{% csrf_token %}
+			 		<div class="row" style="margin-top: 10px;">
+				 		<div class="col-8">
+				 			{% if inputinfo == None %}
+				 			<input type="text" name="mobileno" class="form-control" id="mobileno" placeholder="Mobile No / ID of User">
+				 			{% else %}
+				 			 <input type="text" name="mobileno" class="form-control" id="mobileno" value="{{inputinfo}}">
+				 			 {% endif %}
+				 		</div>
+				 		<div class="col-2" style="margin-top: 3px;">
+				 			<input type="file" name="document" id="file" class="form-data">
+				 		</div>
+				 			}
+			 		</div>
+			 		<div class="row" style="margin: 20px 0px 5px 20px;">
+			 			<input type="submit" class="btn btn-outline-info" name="action" value="Mobility Trace" style="width: 90%; font-size: 90%; height: 90%;">
+			 		</div>
+			 		<div class="row" style="margin: 10px 0px 5px 20px;">
+			 			<input type="submit" class="btn btn-outline-info" name="action" value="Contact Tracing" style="width: 90%; font-size: 90%; height: 90%;">
+			 		</div>
+		 		</form>
+		 		<div class="row" style="margin-top: 20px;">
+		 			{% if data_present == True %}
+		 			<div class="col-12">
+		 				<table class="display">
+	 					<thead>
+	 						{% if map_mode == 'covid19trace' %}
+	 						{% if file_name == None %}
+		 						<tr>
+		 							<th>Location</th>
+		 							<th>Total Time Spent(hrs)</th>
+		 							<th>Frequency</th>
+		 						</tr>
+		 					{% else %}
+		 						<tr>
+		 							<th>Location</th>
+		 							<th>Time Spent(hrs)</th>
+		 							<th>Freq</th>
+		 							<th>No of Persons</th>
+		 						</tr>
+		 					{% endif %}
+	 						{% elif map_mode == 'contact tracing' %}
+
+	 							{% if file_name == None %}
+	 								<tr>
+	 									<th>ID of Contacted User</th>
+	 								</tr>
+	 							{% else %}
+	 								<tr>
+	 									<th>ID of Contacted User</th>
+	 									<!-- <th>No of Persons Contacted</th> -->
+	 								</tr>
+	 							{% endif %}
+
+	 						{% endif %}
+	 					</thead>
+	 				</table>
+		 			</div>
+		 			{% endif %}
+		 		</div>
+		 	</div>
+
+		 	<!-- Table -->
+
+	 	</div>
+	</div>
+
+
+
+
+
+
+
+  	<script>
+    	$(document).ready(function(){
+    		$('#file').inputFileText({text:'Upload File'});
+    	});
+
+
+      var map = L.map('map');
+      if ('{{map_mode}}' == '{{""}}'){
+      	map.setView([23.732568, 90.385165], 13);
+      }
+      else {
+      	map.setView(["{{midlat}}", "{{midlon}}"], 14);
+      }
+
+      // google basemap
+      L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{
+      	attribution: 'BUET | Google Maps',
+      	maxZoom:20,
+      	subdomains:['mt0','mt1','mt2','mt3']
+      }).addTo(map);
+
+
+      //add scale to map
+      L.control.scale().addTo(map);
+
+
+      if ('{{map_mode}}' == '{{"covid19trace"}}'){
+	      var count_traj = JSON.parse("{{ count_traj | escapejs }}");
+	      var max_freq = "{{max_frequency}}";
+	      
+	      //console.log('max freq', max_freq);
+	      for (index=0; index < count_traj.length; index++){
+	      	lat = count_traj[index][0];
+	      	long = count_traj[index][1];
+	      	freq = count_traj[index][2];
+	      	rad = count_traj[index][3];
+	      	opacity = count_traj[index][6];
+	      	// rel_opacity = freq/max_freq;
+	      	// if (rel_opacity < 0.1){ rel_opacity = 0.1}
+	      	// else if (rel_opacity > 0.75) {rel_opacity = 0.75};
+
+	      	var circleref = L.circle([lat, long], {
+	      		color: 'red',
+	      		fillColor: "#e83535",
+	      		fillOpacity: opacity,
+	      		radius: rad //50
+	      	}).addTo(map);
+	      	var strfreq = "Visited:" + freq.toString() + " times | " + count_traj[index][4].toString() + " hrs";
+	      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strfreq);
+	      	circleref.bindPopup(circlepopup);
+	      	circleref.on('mouseover', function(evt){
+	      		this.openPopup();
+	      	})
+	      	circleref.on('mouseout', function(evt){
+	      		this.closePopup();
+	      	})
+
+	      }
+	   }
+  		
+
+  		else if ('{{map_mode}}' == '{{"contact tracing"}}' && '{{file_name}}' == '{{None}}') {
+  			var count_traj = JSON.parse("{{ count_traj | escapejs }}");
+		    var max_freq = "{{max_frequency}}";
+		    var input_uid = "{{input_uid}}";
+		    
+		
+	      for (index=0; index < count_traj.length; index++){
+	      	lat = count_traj[index][0];
+	      	long = count_traj[index][1];
+	      	freq = count_traj[index][2];
+	      	rad = count_traj[index][3];
+	      	uid = count_traj[index][5];
+	      	rel_opacity = freq/max_freq;
+	      	if (rel_opacity < 0.1){ rel_opacity = 0.1}
+	      	else if (rel_opacity > 0.88) {rel_opacity = 0.88};
+
+	      	if (uid == input_uid){ 
+		      	var circleref = L.circle([lat, long], {
+		      		color: 'red',
+		      		fillColor: "#e83535",
+		      		fillOpacity: rel_opacity,
+		      		radius: rad*1.1
+		      	}).addTo(map);
+		      	var strfreq = count_traj[index][2].toString();
+		      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(uid);
+		      	circleref.bindPopup(circlepopup);
+		      	circleref.on('mouseover', function(evt){
+		      		this.openPopup();
+		      	})
+		      	circleref.on('mouseout', function(evt){
+		      		this.closePopup();
+		      	})
+	      	}
+	      	else {
+	      		var circleref = L.circle([lat, long], {
+		      		color: 'blue',
+		      		fillColor: "#34a0ed",
+		      		fillOpacity: rel_opacity,
+		      		radius: rad
+		      	}).addTo(map);
+		      	var strfreq = count_traj[index][2].toString();
+		      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(uid);
+		      	circleref.bindPopup(circlepopup);
+		      	circleref.on('mouseover', function(evt){
+		      		this.openPopup();
+		      	})
+		      	circleref.on('mouseout', function(evt){
+		      		this.closePopup();
+		      	})
+	      	}
+
+	      }
+	      function getColor(d){ 
+	      		return d == 0 ? '#db2727':
+	      				d == 1 ? '#1e83f7':
+	      						'#4fb514';
+	      }
+	      //add legends
+	      var legend = L.control({position: 'topright'});
+	      legend.onAdd = function(map){
+	      	var div = L.DomUtil.create('div','info legend'),
+	      	grades = ["Covid Positive", "Contacted Persons"];
+	      	
+	      	//style of i: width:18px;height:18px;float:left;opacity:0.7;
+	      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(0) + ';"></i>' + grades[0] + '<br>';
+	      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(1) + ';"></i>' + grades[1];
+	      	return div;
+	       };
+	       legend.addTo(map);
+
+  		}
+  		else if ('{{map_mode}}' == '{{"contact tracing"}}' && '{{file_name}}' != '{{None}}'){
+  			var count_traj = JSON.parse("{{ count_traj | escapejs }}");
+  			var input_uids = JSON.parse("{{ input_uids | escapejs }}");
+  			var max_freq = "{{max_frequency}}";
+  			
+  			for (index=0; index < count_traj.length; index++){
+		      	lat = count_traj[index][0];
+		      	long = count_traj[index][1];
+		      	freq = count_traj[index][2];
+		      	rad = count_traj[index][3];
+		      	uid = count_traj[index][5];
+		      	puid = false;
+		      	rel_opacity = freq/max_freq;
+		      	if (rel_opacity < 0.1){ rel_opacity = 0.1}
+		      	else if (rel_opacity > 0.88) {rel_opacity = 0.88};
+
+		      	for (i1=0; i1 < input_uids.length; i1 ++) {
+		      		if (uid == input_uids[i1]) {
+		      			puid = true ;
+		      			break;
+		      		}
+		      	}
+
+		      	if (puid == true){ 
+			      	var circleref = L.circle([lat, long], {
+			      		color: 'red',
+			      		fillColor: "#e83535",
+			      		fillOpacity: rel_opacity,
+			      		radius: rad*1.1
+			      	}).addTo(map);
+			      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(uid);
+			      	circleref.bindPopup(circlepopup);
+			      	circleref.on('mouseover', function(evt){
+			      		this.openPopup();
+			      	})
+			      	circleref.on('mouseout', function(evt){
+			      		this.closePopup();
+			      	})
+		      	}
+		      	else {
+		      		var circleref = L.circle([lat, long], {
+			      		color: 'blue',
+			      		fillColor: "#34a0ed",
+			      		fillOpacity: rel_opacity,
+			      		radius: rad
+			      	}).addTo(map);
+			      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(uid);
+			      	circleref.bindPopup(circlepopup);
+			      	circleref.on('mouseover', function(evt){
+			      		this.openPopup();
+			      	})
+			      	circleref.on('mouseout', function(evt){
+			      		this.closePopup();
+			      	})
+		      	}
+	      	}	
+	      	function getColor(d){ 
+	      		return d == 0 ? '#db2727':
+	      				d == 1 ? '#1e83f7':
+	      						'#4fb514';
+		      }
+		      //add legends
+		      var legend = L.control({position: 'topright'});
+		      legend.onAdd = function(map){
+		      	var div = L.DomUtil.create('div','info legend'),
+		      	grades = ["Covid Positive", "Contacted Persons"];
+		      	
+		      	//style of i: width:18px;height:18px;float:left;opacity:0.7;
+		      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(0) + ';"></i>' + grades[0] + '<br>';
+		      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(1) + ';"></i>' + grades[1];
+		      	return div;
+		       };
+		       legend.addTo(map);
+		      	
+  		}
+
+  		if ('{{map_mode}}' != '{{""}}'){
+  			//add legends
+	      var legend = L.control({position: 'topright'});
+	      legend.onAdd = function(map){
+	      	var div = L.DomUtil.create('div','info legend'),
+	      	grades = ["1hr : 6metres"]; 
+	      	//style of i: width:18px;height:18px;float:left;opacity:0.7;
+	      	div.innerHTML += '<div style="border: 2px solid black; font-size:105%; margin-right:20px;">' + grades[0] + '</div> <br>';
+	      	
+	      	return div;
+	       };
+	       legend.addTo(map);
+  		}
+    </script>
+
+
+
+    <!--
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+	-->
+
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+	<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.js"></script>
+
+	<script>
+		if ('{{map_mode}}' == '{{"covid19trace"}}'){
+			if ('{{file_name}}' == '{{"None"}}') {
+				$(document).ready( function () { 
+				    $('.display').DataTable({
+				    	'scrollY' : "310px",
+				    	"scrollCollapse":true,
+				    	'paging':false,
+				    	'searching':false,
+				    	'ajax': {
+				    		'url': "media/tracingnew1.json",
+				    		'dataSrc': ''
+				    	},
+
+				    	'columns': [
+				    		{'data': "Location"},
+				    		{'data': "Time Spent"},
+				    		{'data': "Frequency"},
+				    	],
+				    	'order':[[1,'desc']]
+				    });
+					
+				});
+			}
+			else{
+				$(document).ready( function () { 
+				    $('.display').DataTable({
+				    	'scrollY' : "310px",
+				    	"scrollCollapse":true,
+				    	'paging':false,
+				    	'searching':false,
+				    	'ajax': {
+				    		'url': "media/tracingfile1.json",
+				    		'dataSrc': ''
+				    	},
+
+				    	'columns': [
+				    		{'data': "Location"},
+				    		{'data': "Time Spent"},
+				    		{'data': "Frequency"},
+				    		{'data': "PersonNo"}
+				    	],
+				    	'order':[[1,'desc']]
+				    });
+					
+				});
+			}
+		}
+		else if ('{{map_mode}}' == '{{"contact tracing"}}') {
+			if ('{{file_name}}' == '{{"None"}}') {
+				$(document).ready( function () { 
+				    $('.display').DataTable({
+				    	'scrollY' : "310px",
+				    	"scrollCollapse":true,
+				    	'paging':false,
+				    	'searching':false,
+				    	'ajax': {
+				    		'url': "media/contacttracingnew1.json",
+				    		'dataSrc': ''
+				    	},
+
+				    	'columns': [
+				    		{'data': "ID"}
+				    	]
+				    });
+					
+				});
+			}
+			else {
+				$(document).ready( function () { 
+				    $('.display').DataTable({
+				    	'scrollY' : "310px",
+				    	"scrollCollapse":true,
+				    	'paging':false,
+				    	'searching':false,
+				    	'ajax': {
+				    		'url': "media/contacttracingfile1.json",
+				    		'dataSrc': ''
+				    	},
+
+				    	'columns': [
+				    		{'data': "ID"}
+				    		// {'data': "NumberContacted"}
+				    	]
+				    });
+					
+				});
+			}
+		}
+		
+		
+	</script>
+
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
