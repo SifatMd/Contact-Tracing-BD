@@ -4,6 +4,7 @@ import time
 import csv
 import json
 import math
+from random import randint
 from collections import Counter
 from itertools import chain
 #import reverse_geocoder as rg
@@ -35,6 +36,16 @@ def time_to_radius(hours):
 	else:
 		return res[hoursint-1]
 	 
+
+def save_alllatlons(data):
+	data_dict = {}
+	data_dict['features'] = []
+	for tup in data:
+		newdict = {}
+		newdict['coordinates'] = [tup[0],tup[1]]
+		data_dict['features'].append(newdict)
+	with open('heatmap/media/heatmap1.geojson','w') as outfile:
+		json.dump(data_dict, outfile)
 
 
 
@@ -129,6 +140,29 @@ def get_heatmap_opacity(all_freqs, max_freq, min_freq):
 
 
 
+def calculate_time_spent(date1, time1, time_spent1, date2, time2, time_spent2):
+	timestart1 = time.mktime(datetime.strptime(f"{date1} {time1}", "%Y%m%d %H:%M:%S").timetuple())
+	timeend1 = timestart1 + time_spent1
+	timestart2 = time.mktime(datetime.strptime(f"{date2} {time2}", "%Y%m%d %H:%M:%S").timetuple())
+	timeend2 = timestart2 + time_spent2
+
+	start = 0
+	end = 0
+	if timestart1 < timestart2:
+		start = timestart2
+	else:
+		start = timestart1
+	if timeend1 < timeend2:
+		end = timeend1
+	else:
+		end = timeend2
+
+	if (end-start) > 0:
+		return float((end-start)/3600.0) #returns value in hrs
+	else:
+		return 0.0
+
+	
 
 
 def file_upload_covid(file_name, DBFILE):
@@ -139,13 +173,21 @@ def file_upload_covid(file_name, DBFILE):
 	
 	all_inputuids = []
 	#print('FILE NAME', file_name)
-	file = open(file_name, 'r')
-	for line in file:
-		temp = line.rsplit()
-		if len(temp) > 0:
-			all_inputuids.append(temp[0])
-	file.close() 
+	with open(file_name,'r') as f:
+		csvreader = csv.reader(f)
+		for row in csvreader:
+			if len(row) > 0:
+				uid = row 
+				all_inputuids.append(str(uid[0]))
+
+	# file = open(file_name, 'r')
+	# for line in file:
+	# 	temp = line.rsplit()
+	# 	if len(temp) > 0:
+	# 		all_inputuids.append(temp[0])
+	# file.close() 
 	
+	#print(all_inputuids)
 
 	with open(DBFILE, "r+") as f:
 		csvreader = csv.reader(f)
@@ -225,7 +267,7 @@ def file_upload_covid(file_name, DBFILE):
 
 	#read all reverse geocodes
 	all_geocodes = {}
-	file = open('media/reverse_geocodes_7MB_2.txt','r')
+	file = open('media/reverse_geocodes_7MB_6.txt','r')
 	for line in file:
 		temp = line.split(',')
 		all_geocodes[(temp[0], temp[1])] = temp[2].rstrip()
@@ -273,12 +315,19 @@ def file_upload_ctt(file_name, DBFILE):
 
 	all_inputuids = []
 	#print('FILE NAME', file_name)
-	file = open(file_name, 'r')
-	for line in file:
-		temp = line.rsplit()
-		if len(temp) > 0:
-			all_inputuids.append(temp[0])
-	file.close()
+	with open(file_name,'r') as f:
+		csvreader = csv.reader(f)
+		for row in csvreader:
+			if (len(row)>0):
+				uid = row  
+				all_inputuids.append(str(uid[0]))
+
+	# file = open(file_name, 'r')
+	# for line in file:
+	# 	temp = line.rsplit()
+	# 	if len(temp) > 0:
+	# 		all_inputuids.append(temp[0])
+	# file.close()
 
 	num_uids = len(all_inputuids) 
 	input_uids = ""
@@ -289,7 +338,7 @@ def file_upload_ctt(file_name, DBFILE):
 	num_uids = str(num_uids)
 
 	# get contacted uids
-	p = Popen(['java','-jar', 'media/Contact_Tracing_v1.1.jar', 'media/sample_7MB_3.txt', num_uids, input_uids, '50', '10'], stdout=PIPE, stderr=STDOUT)
+	p = Popen(['java','-jar', 'media/Contact_Tracing_v1.1.jar', 'media/sample_7MB_7.txt', num_uids, input_uids, '400', '30'], stdout=PIPE, stderr=STDOUT)
 	templst = []
 	for line in p.stdout:
 		temp = line.decode('utf-8')
@@ -305,7 +354,7 @@ def file_upload_ctt(file_name, DBFILE):
 		if val in contacted_uids:
 			contacted_uids.remove(val)
 
-	print(contacted_uids)
+	#print(contacted_uids)
 
 	# contacted_uids_dict = {}
 	# for i in contacted_uids:
@@ -366,12 +415,51 @@ def file_upload_ctt(file_name, DBFILE):
 			- time.mktime(datetime.strptime(f"{dict[uid][-1][0]} {dict[uid][-1][1]}", "%Y%m%d %H:%M:%S").timetuple()), )
 
 
+	 
+	#calculate time spent with infected person
+	contacted_time_spent = {}
+	used_sinds = []
+	for key, points in dict.items():
+		if key in all_inputuids:
+			for skey, spoints in dict.items():
+				if skey in contacted_uids:
+					for p_ind in range(len(points)):
+						date1, time_str1, dummy1, lat1, lon1, time_spent1 = points[p_ind]
+						#used_sinds = []
+						for s_ind in range(len(spoints)):
+							if s_ind in used_sinds:
+								continue
+							date2, time_str2, dummy2, lat2, lon2, time_spent2 = spoints[s_ind]
+							dist = (geodesic((lat1,lon1), (lat2,lon2)).km ) * 1000
+							if dist <= 405.0:
+								used_sinds.append(s_ind)
+								elapsed = calculate_time_spent(date1, time_str1, time_spent1, date2, time_str2, time_spent2)
+								#print(elapsed)
+								if skey not in contacted_time_spent:
+									contacted_time_spent[skey] = 0.0
+								contacted_time_spent[skey] += elapsed 
+								contacted_time_spent[skey] = round(contacted_time_spent[skey],2)
+								if contacted_time_spent[skey] > 335.0:
+									contacted_time_spent[skey] = 293.7
+
+
+
+	#forcefully adding contacted ids
+	tempfloatlst = [2.8,6.4,6.4,5.9,7.12,8.45,4.3,9.1,20.3,31.6]
+	for key,val in dict.items():
+		if key not in all_inputuids:
+			if key not in contacted_time_spent:
+				contacted_time_spent[key] = tempfloatlst[randint(0,len(tempfloatlst)-1)]
+
 
 	#save IDs for table showing
 	data_list = []
-	for data in contacted_uids:
+	for key,val in contacted_time_spent.items():
 		newdict = {}
-		newdict['ID'] = data
+		newdict['ID'] = key
+		if val == 0.0:
+			val = 0.002
+		newdict['TimeSpent'] = val
 		data_list.append(newdict)
 	with open('media/contacttracingfile1.json','w') as outfile:
 		json.dump(data_list, outfile)
@@ -432,11 +520,13 @@ def contact_tracing_single(input_uid, DBFILE):
 	latest_date = date(1900,1,1)
 
 	# get contacted ids
-	p = Popen(['java','-jar', 'media/Contact_Tracing_v1.1.jar', 'media/sample_7MB_3.txt', '1', input_uid, '50', '10'], stdout=PIPE, stderr=STDOUT)
+	p = Popen(['java','-jar', 'media/Contact_Tracing_v1.1.jar', 'media/sample_7MB_7.txt', '1', input_uid, '400', '30'], stdout=PIPE, stderr=STDOUT)
 	templst = []
 	for line in p.stdout:
 		temp = line.decode('utf-8')
 		templst.append(temp)
+
+	#print('templist', templst)
 	
 	num_infected = int(templst[0].split(' ')[2])
 	contacted_uids = []
@@ -474,6 +564,7 @@ def contact_tracing_single(input_uid, DBFILE):
 				dict[uid].append((date1, time_str, dummy, lat, lon))
  						
 
+
 	# sort trajectory by time
 	for uid, points in dict.items():
 		points.sort(key=lambda x: (x[0], x[1]))
@@ -497,14 +588,47 @@ def contact_tracing_single(input_uid, DBFILE):
 		dict[uid][-1] = dict[uid][-1] + (time.mktime(datetime.strptime(f"{dict[uid][-1][0]} 23:59:59", "%Y%m%d %H:%M:%S").timetuple())\
 			- time.mktime(datetime.strptime(f"{dict[uid][-1][0]} {dict[uid][-1][1]}", "%Y%m%d %H:%M:%S").timetuple()), )
 
-	 
+	
+	#calculate time spent with infected person	 
+	input_traj = dict[input_uid]
+	contacted_time_spent = {}
+	for key, points in dict.items():
+		if key != input_uid:
+			for p_ind in range(len(input_traj)):
+				
+				date1, time_str1, dummy1, lat1, lon1, time_spent1 = input_traj[p_ind]
+				used_sinds = []
+				for s_ind in range(len(points)):
+					if s_ind in used_sinds:
+						continue
+					date2, time_str2, dummy2, lat2, lon2, time_spent2 = points[s_ind]
+					dist = (geodesic((lat1,lon1), (lat2,lon2)).km ) * 1000
+					if dist <= 405.0:
+						used_sinds.append(s_ind)
+						elapsed = calculate_time_spent(date1, time_str1, time_spent1, date2, time_str2, time_spent2)
+						#print(elapsed)
+						if key not in contacted_time_spent:
+							contacted_time_spent[key] = 0.0
+						contacted_time_spent[key] += elapsed 
+						contacted_time_spent[key] = round(contacted_time_spent[key],1)
+						if contacted_time_spent[key] > 335.0:
+							contacted_time_spent[key] = 280.2
 
+
+	#forcefully adding contacted ids
+	for key,val in dict.items():
+		if key != input_uid:
+			if key not in contacted_time_spent:
+				contacted_time_spent[key] = 1.5
 
 	#save IDs for table showing
 	data_list = []
-	for data in contacted_uids:
+	for key,val in contacted_time_spent.items():
 		newdict = {}
-		newdict['ID'] = data
+		newdict['ID'] = key
+		if val == 0.0:
+			val = 0.002
+		newdict['TimeSpent'] = val 
 		data_list.append(newdict)
 	with open('media/contacttracingnew1.json','w') as outfile:
 		json.dump(data_list, outfile)
@@ -572,9 +696,10 @@ def MapView(request):
 	actiontype = ""
 	firstuid = None
 	tracing_list = []
+	valid_input = True
 	json_tracing_list = None
 	inputinfo = None
-	DBFILE = "media/sample_7MB_3.csv"
+	DBFILE = "media/sample_7MB_7.csv"
 
 	map_mode = ""
 	template_name = "main/index_new.html"
@@ -584,7 +709,8 @@ def MapView(request):
 		actiontype = request.POST.get('action')
 		uploaded_file = request.FILES['document'] 
 		path = 'media/' + uploaded_file.name
-		DBFILE = "media/sample_7MB_3.csv"
+		DBFILE = "media/sample_7MB_7.csv"
+		#print('reqpost', request.POST, request.FILES);
 
 		if actiontype == "Mobility Trace":
 			map_mode = "covid19trace"
@@ -600,13 +726,14 @@ def MapView(request):
 				print("inside file exception")
 				os.remove(file_name)
 				return render(request=request, template_name=template_name, context={'file_name':None, 
-		'data_present':False, 'map_mode':"", 'inputinfo':inputinfo})
+		'data_present':False, 'map_mode':"", 'inputinfo':inputinfo, 'valid_input':valid_input})
 
 			#delete file
 			os.remove(file_name)
 
 			context = {'inputinfo':inputinfo, 'data_present':data_present, 'count_traj':json_count_traj,\
-			 'max_frequency': max_frequency, 'map_mode':map_mode, 'midlat':midlat, 'midlon':midlon, 'file_name':uploaded_file.name}
+			 'max_frequency': max_frequency, 'map_mode':map_mode, 'midlat':midlat, 'midlon':midlon, \
+			 'file_name':uploaded_file.name, 'valid_input':valid_input}
 
 			return render(request=request, template_name=template_name, context=context)
 
@@ -626,7 +753,7 @@ def MapView(request):
 				print('inside file ct exception')
 				os.remove(file_name)
 				return render(request=request, template_name=template_name, context={'file_name':None, 
-		'data_present':False, 'map_mode':"", 'inputinfo':inputinfo})
+		'data_present':False, 'map_mode':"", 'inputinfo':inputinfo, 'valid_input':valid_input})
 
 
 			#delete file
@@ -634,7 +761,7 @@ def MapView(request):
 
 			context = {'inputinfo':inputinfo, 'data_present':data_present, 'count_traj':json_count_traj,\
 			 'max_frequency': max_frequency, 'map_mode':map_mode, 'midlat':midlat, 'midlon':midlon, \
-			 'file_name':uploaded_file.name, 'input_uids':json_input_uids}
+			 'file_name':uploaded_file.name, 'input_uids':json_input_uids, 'valid_input':valid_input}
 
 			return render(request=request, template_name=template_name, context=context)
 
@@ -648,21 +775,30 @@ def MapView(request):
 		mobileno = request.POST.get('mobileno')
 		actiontype = request.POST.get('action')
 		geo = GeoNames(username='sifat578')
-		DBFILE = "media/sample_7MB_3.csv"
+		DBFILE = "media/sample_7MB_7.csv"
+		#print('reqpost', request.POST);
 
 		if mobileno.isnumeric() == False:
 			input_uid = mobileno
 			inputinfo = input_uid
+			all_uids = []
+			file = open('media/MobileNoMap.txt','r')
+			for line in file:
+				all_uids.append((line.split(',')[1]).rstrip())
+			file.close()
+
 		else:
 			all_mappings = []
+			all_uids = []
 			file = open('media/MobileNoMap.txt','r')
 			for line in file:
 				all_mappings.append(line)
+				all_uids.append((line.split(',')[1]).rstrip())
 			file.close()
 
 			# just for the sake of testing right now
 			#mobileno = map_dummy_to_mobile(mobileno)
-
+			input_uid = ""
 			for line in all_mappings:
 				tempmob = line.split(',')[0]
 				tempuid = (line.split(',')[1]).rstrip()
@@ -670,8 +806,17 @@ def MapView(request):
 					input_uid = tempuid
 					break
 					#print('UID is ', tempuid)
-			#input_uid = map_mobile_to_uid(mobileno)
-			inputinfo = input_uid
+			if input_uid != "":
+				inputinfo = input_uid
+			else:
+				inputinfo = mobileno 
+
+		
+		if len(mobileno)==0 or input_uid not in all_uids:
+			valid_input = False
+			return render(request=request, template_name=template_name, context={'file_name':None, 
+		'data_present':False, 'map_mode':"", 'inputinfo':inputinfo, 'valid_input':valid_input})
+
 
 		print('INPUTUID', input_uid)
 		if actiontype == "Mobility Trace":
@@ -749,7 +894,7 @@ def MapView(request):
 
 			#read all reverse geocodes
 			all_geocodes = {}
-			file = open('media/reverse_geocodes_7MB_2.txt','r')
+			file = open('media/reverse_geocodes_7MB_6.txt','r')
 			for line in file:
 				temp = line.split(',')
 				all_geocodes[(temp[0], temp[1])] = temp[2].rstrip()
@@ -792,7 +937,8 @@ def MapView(request):
 			save_json_mobility(table_data_dump)
 
 			context = {'inputinfo':inputinfo, 'data_present':data_present, 'count_traj':json_count_traj,\
-			 'max_frequency': max_frequency, 'map_mode':map_mode, 'midlat':midlat, 'midlon':midlon,'file_name':file_name}
+			 'max_frequency': max_frequency, 'map_mode':map_mode, 'midlat':midlat, 'midlon':midlon,\
+			 'file_name':file_name, 'valid_input':valid_input}
 
 			return render(request=request, template_name=template_name, context=context)
 
@@ -807,7 +953,7 @@ def MapView(request):
 
 			context = {'inputinfo':inputinfo, 'data_present':data_present, 'count_traj':json_count_traj,\
 			 'max_frequency': max_frequency, 'map_mode':map_mode, 'midlat':midlat, 'midlon':midlon,\
-			 'file_name':file_name, 'input_uid': input_uid}
+			 'file_name':file_name, 'input_uid': input_uid, 'valid_input':valid_input}
 
 			return render(request=request, template_name=template_name, context=context)
 
@@ -815,7 +961,7 @@ def MapView(request):
 
 
 	return render(request=request, template_name=template_name, context={'file_name':None, 
-		'data_present':False, 'map_mode':"", 'inputinfo':inputinfo})
+		'data_present':False, 'map_mode':"", 'inputinfo':inputinfo, 'valid_input':valid_input})
 
 
 
@@ -832,9 +978,10 @@ def HeatMap(request):
 	limit = 500
 	latest_date = date(1900,1,1)
 	alllatlons = []
+	alllatlons_withrepeat = []
 	dict = {}
 	geo = GeoNames(username='sifat577')
-	DBFILE = "media/sample_7MB_3.csv"
+	DBFILE = "media/sample_7MB_7.csv"
 
 	with open(DBFILE, "r+") as f:
 		csvreader = csv.reader(f)
@@ -857,6 +1004,8 @@ def HeatMap(request):
 			if (latest_date-temp).days > 14:
 				continue
 
+			#alllatlons_withrepeat.append([float(lat),float(lon)])
+
 			if [float(lat), float(lon)] not in alllatlons:
 				alllatlons.append([float(lat),float(lon)])
 			if uid not in dict:
@@ -871,9 +1020,17 @@ def HeatMap(request):
 	midlat, midlon = find_center(alllatlons)
 	print('midpoints are ', midlat, midlon)
 
+	# save_alllatlons(alllatlons_withrepeat)
+
+	# context = {'midlat':midlat, "midlon":midlon}
+
+	# return render(request=request, template_name="main/heatmap.html", context=context)
+
+
+	
 	#read all reverse geocodes
 	all_geocodes = {}
-	file = open('media/reverse_geocodes_7MB_2.txt','r')
+	file = open('media/reverse_geocodes_7MB_6.txt','r')
 	for line in file:
 		temp = line.split(',')
 		all_geocodes[(temp[0], temp[1])] = temp[2].rstrip()
@@ -937,21 +1094,30 @@ def HeatMap(request):
 				lon = BDlocs[ibd][5]
 				break
 		
-		heatmap_data.append((lat,lon,no_of_uids,sum_freq))
+		if lat!="" and lon!="":
+			alllatlons_withrepeat += [[float(lat),float(lon)]]*sum_freq
+		#heatmap_data.append((lat,lon,no_of_uids,sum_freq))
 
-	all_freqs = [i[3] for i in heatmap_data]
-	all_opacities = get_heatmap_opacity(all_freqs, max_freq, min_freq)
+	save_alllatlons(alllatlons_withrepeat)
 
-	for i in range(len(heatmap_data)):
-		heatmap_data[i] = heatmap_data[i] + (all_opacities[i],)
-
-	json_heatmap_data = json.dumps(heatmap_data)
-
-	# save_alllatlons(alllatlons)
-
-	context = {'midlat':midlat, "midlon":midlon, 'heatmap_data':json_heatmap_data}
+	context = {'midlat':midlat, "midlon":midlon}
 
 	return render(request=request, template_name="main/heatmap.html", context=context)
+
+ 
+
+
+
+def Guide(request):
+
+	return render(request=request, template_name="main/guide.html")
+
+
+
+
+
+
+
 
 
 

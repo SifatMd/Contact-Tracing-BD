@@ -12,6 +12,7 @@
     <script src="https://code.jquery.com/jquery-2.2.4.js" integrity="sha256-iT6Q9iMJYuQiMWNd9lDyBUStIq/8PuOW33aOqmvFpqI=" crossorigin="anonymous"></script>
     
 
+    <script type="text/javascript" src="/media/leaflet-heat.js"></script>
     
 
     <style type="text/css">
@@ -44,13 +45,16 @@
   		<a href="/" class="navbar-brand">
   			BUET Contact Tracing
   		</a>
-  		<ul class="navbar-nav" style="flex-direction: row; margin-right: 20px; font-size: 120%;">
-  			<li class="nav-item" style="margin-right: 20px;">
-  				<a href="/" class="nav-link" style="color: white;">HomePage</a>
+  		<ul class="navbar-nav" style="flex-direction: row; margin-right: 20px; font-size: 110%;">
+  			<li class="nav-item">
+  				<a href="/" class="nav-link" style="color: white; margin-right: 20px;">Home</a>
   			</li>
   			<li class="nav-item">
-  				<a href="#" class="nav-link">HeatMap</a>
+  				<a href="#" class="nav-link" style="margin-right: 20px;">HeatMap</a>
   			</li>
+        <li class="nav-item">
+            <a href="/help" class="nav-link" style="color: white;">Help</a>
+        </li>
   		</ul>
   	</nav>
  
@@ -63,56 +67,132 @@
 
 
   	<script>
-  	  var map = L.map('map').setView(["{{midlat}}", "{{midlon}}"], 13);
+  	  var map = L.map('map').setView(["{{midlat}}", "{{midlon}}"], 12);
       //var map = L.map('map').setView([23.9501, 90.2733], 12);
 	      //23.699200, 90.449997   |   42.35, -71.08   |   23.9501, 90.2733
 	    // load a tile layer
       L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{
         attribution: 'BUET | Google Maps',
         maxZoom:20,
+        minZoom:5,
         subdomains:['mt0','mt1','mt2','mt3']
       }).addTo(map);
       //add scale to map
       L.control.scale().addTo(map);
 
 
-      var heatmap_data = JSON.parse("{{ heatmap_data | escapejs }}");
+      // var heatmap_data = JSON.parse("{{ heatmap_data | escapejs }}");
+
+      $.getJSON("/media/heatmap1.geojson",function(data){
+          
+          var locations = data.features.map(function(rat) {
+              // the heatmap plugin wants an array of each location
+              var location = rat.coordinates;
+              location.push(0.5); //most possibly this is the altitude/intensity which is kept fixed as it doesn't affect any sort of calculation
+              //console.log(location);
+              return location;
+          });
+           //console.log(locations);
+
+        var heat = L.heatLayer(locations, { radius: 35, gradient: 
+          {0.2: "#330000", 0.4: '#550000', 0.6: '#880000', 0.8: '#bb0000',1: "#ee0000"}, maxZoom: 20});
+          map.addLayer(heat);
+
+
+          function getRadius(){
+            var currzoom = map.getZoom();
+            //console.log('currzoom', currzoom);
+            var radius;
+            if (currzoom==13){
+              radius = 20;
+            }
+            else if(currzoom==14){
+              radius = 20;
+            }
+            else if (currzoom==15){
+              radius = 20;
+            }
+            else if (currzoom==16){
+              radius = 30;
+            }
+            else if (currzoom==17){
+              radius = 40;
+            }
+            else if (currzoom==18){
+              radius = 60;
+            }
+            else if (currzoom==19){
+              radius = 82;
+            }
+            else if (currzoom==20){
+              radius = 108;
+            }
+            else{
+              radius = 20;
+            }
+            console.log('radius', radius, 'zoom', currzoom);
+            return radius;
+          }
+
+          map.on('zoomend', function(ev) {
+              // zoom level changed... adjust heatmap layer options!
+              
+              heat.setOptions({
+                  radius: getRadius(),
+                  // max: 1.0,
+                  // blur: 16,              
+                  // gradient: {
+                  //     0.0: 'yellow',
+                  //     0.5: 'orange',
+                  //     1.0: 'red'
+                  // },
+                  gradient: {0.2: "#330000", 0.4: '#550000', 0.6: '#880000', 0.8: '#bb0000',1: "#ee0000"},
+                  minOpacity: 0.8
+              });
+              // render the new options
+              heat.redraw();
+          });
+ 
+
+        });
+
+
       
         
       //console.log('max freq', max_freq);
-      for (index=0; index < heatmap_data.length; index++){
-        lat = heatmap_data[index][0];
-        long = heatmap_data[index][1];
-        no_of_uids = heatmap_data[index][2];
-        sum_freq = heatmap_data[index][3];
-        opacity = heatmap_data[index][4];
-        // rel_opacity = freq/max_freq;
-        // if (rel_opacity < 0.1){ rel_opacity = 0.1}
-        // else if (rel_opacity > 0.75) {rel_opacity = 0.75};
+      // for (index=0; index < heatmap_data.length; index++){
+      //   lat = heatmap_data[index][0];
+      //   long = heatmap_data[index][1];
+      //   no_of_uids = heatmap_data[index][2];
+      //   sum_freq = heatmap_data[index][3];
+      //   opacity = heatmap_data[index][4];
+      //   // rel_opacity = freq/max_freq;
+      //   // if (rel_opacity < 0.1){ rel_opacity = 0.1}
+      //   // else if (rel_opacity > 0.75) {rel_opacity = 0.75};
 
-        var circleref = L.circle([lat, long], {
-          color: 'red',
-          fillColor: "#e83535",
-          fillOpacity: opacity,
-          radius: 70
-        }).addTo(map);
-        if (no_of_uids == 1){
-          var strfreq = no_of_uids.toString() + " Patient Visited";
-        }
-        else {
-          var strfreq = no_of_uids.toString() + " Patients Visited";
-        }
+      //   var circleref = L.circle([lat, long], {
+      //     color: 'red',
+      //     fillColor: "#e83535",
+      //     fillOpacity: opacity,
+      //     radius: 70
+      //   }).addTo(map);
+      //   if (no_of_uids == 1){
+      //     var strfreq = no_of_uids.toString() + " Patient Visited";
+      //   }
+      //   else {
+      //     var strfreq = no_of_uids.toString() + " Patients Visited";
+      //   }
         
-        var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strfreq);
-        circleref.bindPopup(circlepopup);
-        circleref.on('mouseover', function(evt){
-          this.openPopup();
-        })
-        circleref.on('mouseout', function(evt){
-          this.closePopup();
-        })
+      //   var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strfreq);
+      //   circleref.bindPopup(circlepopup);
+      //   circleref.on('mouseover', function(evt){
+      //     this.openPopup();
+      //   })
+      //   circleref.on('mouseout', function(evt){
+      //     this.closePopup();
+      //   })
 
-      }
+      // }
 
 
   	</script>

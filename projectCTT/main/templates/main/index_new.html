@@ -10,6 +10,9 @@
 
     
     <script src="https://code.jquery.com/jquery-2.2.4.js" integrity="sha256-iT6Q9iMJYuQiMWNd9lDyBUStIq/8PuOW33aOqmvFpqI=" crossorigin="anonymous"></script>
+
+    <!-- Add icon library -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     
 
 
@@ -29,6 +32,95 @@
 		  }
 		#map {width: 100%;
             height: 100%;}
+
+        .highlight {
+		    background-color: #0cc3c9 ;
+		    font-weight: bold;
+		    font-size: 98%;
+		    text-shadow: 1px 1px 0px #EEE;
+		    color: #3d4040;
+		}
+
+		.tabrow {
+		  text-align: center;
+		  position: relative;
+		  list-style: none;
+		  margin-left: 15px;
+		  padding: 0;
+		  line-height: 20px;
+		  font-size: 90%;
+		}
+		.tabrow:before {
+		  z-index: 1;
+		}
+		.tabrow:after {
+		  position: absolute;
+		  content: "";
+		  width: 100%;
+		  bottom: 0;
+		  left: 0;
+		  border-bottom: 1px solid #AAA;
+		  z-index: 1;
+		}
+		.tabrow li {
+		  margin: 0 10px;
+		  padding: 0 10px;
+		  border: 1px solid #AAA;
+		  background: #ECECEC;
+		  display: inline-block;
+		  position: relative;
+		  z-index: 0;
+		}
+		.tabrow li:before,
+		.tabrow li:after {
+		  position: absolute;
+		  bottom: -1px;
+		  width: 6px;
+		  height: 6px;
+		  content: " ";
+		}
+		.tabrow li.selected {
+		  z-index: 2;
+		  border-bottom-color: #FFF;
+		  background: #FFF;
+		  color: #000;
+		}
+		.tabrow li:before {
+		  left: -6px;
+		  
+  		  box-shadow: 2px 2px 0 #ECECEC;
+		}
+		.tabrow li:after {
+		  right: -6px;
+		 
+  		  box-shadow: -2px 2px 0 #ECECEC;
+		}
+		.tabrow li:after, .tabrow li:before {
+		  border: 1px solid #AAA;
+		}
+		.tabrow li {
+		  border-top-left-radius: 6px;
+		  border-top-right-radius: 6px;
+		}
+		.tabrow li:before {
+		  border-bottom-right-radius: 6px;
+		  border-width: 0 1px 1px 0;
+		}
+		.tabrow li:after {
+		  border-bottom-left-radius: 6px;
+		  border-width: 0 0 1px 1px;
+		}
+		.tabrow li.selected:before {
+		  box-shadow: 2px 2px 0 #FFF;
+		}
+		.tabrow li.selected:after {
+		  box-shadow: -2px 2px 0 #FFF;
+		}
+		th {
+			font-size: 93%;
+		}
+		
+		
     </style>
 
     <!--For adding Data Tables -->
@@ -65,11 +157,14 @@
 
 	  				</p>
 	  			</li>
-	  			<li class="nav-item" style="margin-right: 20px;">
-	  				<a href="#" class="nav-link">HomePage</a>
+	  			<li class="nav-item">
+	  				<a href="#" class="nav-link" style="margin-right: 20px;">Home</a>
 	  			</li>
 	  			<li class="nav-item">
-	  				<a href="/heatmap" class="nav-link" style="color: white;">HeatMap</a>
+	  				<a href="/heatmap" class="nav-link" style="color: white; margin-right: 20px;">HeatMap</a>
+	  			</li>
+	  			<li class="nav-item">
+	  				<a href="/help" class="nav-link" style="color: white;">Help</a>
 	  			</li>
 	  		</ul>
 	  	</nav>
@@ -87,9 +182,15 @@
 			 		<div class="row" style="margin-top: 10px;">
 				 		<div class="col-8">
 				 			{% if inputinfo == None %}
-				 			<input type="text" name="mobileno" class="form-control" id="mobileno" placeholder="Mobile No / ID of User">
+				 			<input type="text" name="mobileno" class="form-control" id="mobileno" placeholder="ID of User">
 				 			{% else %}
-				 			 <input type="text" name="mobileno" class="form-control" id="mobileno" value="{{inputinfo}}">
+				 				{% if valid_input == True %}
+				 					<input type="text" name="mobileno" class="form-control" id="mobileno" value="{{inputinfo}}">
+				 				{% else %}
+				 					<input type="text" name="mobileno" class="form-control is-invalid" id="mobileno" value="{{inputinfo}}">
+						 			 <small class="invalid-feedback" style="margin-top: 1px; font-size: 60%;">Invalid Input</small>
+				 				{% endif %}
+				 			 
 				 			 {% endif %}
 				 		</div>
 				 		<div class="col-2" style="margin-top: 3px;">
@@ -98,42 +199,55 @@
 				 			}
 			 		</div>
 			 		<div class="row" style="margin: 20px 0px 5px 20px;">
-			 			<input type="submit" class="btn btn-outline-info" name="action" value="Mobility Trace" style="width: 90%; font-size: 90%; height: 90%;">
+			 			<button type="submit" class="btn btn-outline-info mobilitybtn" name="action" value="Mobility Trace" style="width: 90%; font-size: 90%; height: 90%;" title="Generate list of places the input user(s) have visited in the past 14 days"><i class="fa fa-refresh fa-spin mobilityitag" style="display: none; margin-right: 7px;"></i> Mobility Tracing</button>
 			 		</div>
 			 		<div class="row" style="margin: 10px 0px 5px 20px;">
-			 			<input type="submit" class="btn btn-outline-info" name="action" value="Contact Tracing" style="width: 90%; font-size: 90%; height: 90%;">
+			 			<button type="submit" class="btn btn-outline-info ctbtn" name="action" value="Contact Tracing" style="width: 90%; font-size: 90%; height: 90%;" title="Generate the list of people who came in  contact with the input user(s) in the past 14 days"><i class="fa fa-refresh fa-spin ctitag" style="display: none; margin-right: 7px;"></i> Contact Tracing</button>
 			 		</div>
 		 		</form>
+
 		 		<div class="row" style="margin-top: 20px;">
-		 			{% if data_present == True %}
+		 			
+		 			<ul class="tabrow" id="tabelement" style="margin-bottom: 0px;">
+		 				<li class="tabname" id="mobility" title="Mobility Tracing">
+						   <a class="nav-link" href="#">Mobility</a>
+						 </li>
+			            <li class="tabname" id="contact" title="Contact Tracing">
+			            	<a class="nav-link" href="#">Contact</a>
+			            </li>
+			        </ul>
+
+			        {% if data_present == True %}
+			       <!--  <div id="sectionA" class="col-12 tab-pane fade in active"> -->
 		 			<div class="col-12">
-		 				<table class="display">
+		 				<table class="display cell-border table table-striped table-bordered table-condensed" id="exampletable">
 	 					<thead>
 	 						{% if map_mode == 'covid19trace' %}
 	 						{% if file_name == None %}
 		 						<tr>
-		 							<th>Location</th>
-		 							<th>Total Time Spent(hrs)</th>
-		 							<th>Frequency</th>
+		 							<th><span title="Locations visited by input user">Location</span></th>
+		 							<th><span title="Total time spent in respective locations">Time Spent(hrs)</span></th>
+		 							<th><span title="Number of visits to respective locations">Freq</span></th>
 		 						</tr>
 		 					{% else %}
 		 						<tr>
-		 							<th>Location</th>
-		 							<th>Time Spent(hrs)</th>
-		 							<th>Freq</th>
-		 							<th>No of Persons</th>
+		 							<th><span title="Locations visited by input user">Location</span></th>
+		 							<th><span title="Total time spent in respective locations">Time Spent(hrs)</span></th>
+		 							<th><span title="Number of visits to respective locations">Freq</span></th>
+		 							<th><span title="No of People in that location">No of Persons</span></th>
 		 						</tr>
 		 					{% endif %}
 	 						{% elif map_mode == 'contact tracing' %}
 
 	 							{% if file_name == None %}
 	 								<tr>
-	 									<th>ID of Contacted User</th>
+	 									<th><span title="User ID that came in contact">Contacted User ID</span></th>
+	 									<th><span title="Total time spent with infected patients">Contact Time(hrs)</span></th>
 	 								</tr>
 	 							{% else %}
 	 								<tr>
-	 									<th>ID of Contacted User</th>
-	 									<!-- <th>No of Persons Contacted</th> -->
+	 									<th><span title="User ID that came in contact">Contacted User ID</span></th>
+	 									<th><span title="Total time spent with infected patients">Contact Time(hrs)</span></th>
 	 								</tr>
 	 							{% endif %}
 
@@ -151,9 +265,95 @@
 	</div>
 
 
+	<script>
+		$(document).ready(function(){
+			$(".mobilitybtn").click(function(){
+				$('.mobilityitag').show();
+			});
+		});
+
+		$(document).ready(function(){
+			$(".ctbtn").click(function(){
+				$('.ctitag').show();
+			});
+		});
+
+	</script>
 
 
+	<script>
 
+	function changetab(tab_name){
+		var i;
+		var x = document.getElementsByClassName("tabname");
+		// console.log('x is', x);
+		for (i = 0; i < x.length; i++) {
+		    x[i].className = "tabname ";
+		  }
+	  	document.getElementById(tab_name).className += "selected";
+	}
+	
+
+	function goBack() {
+		window.history.back(); 
+		
+	}
+
+	function goForward() {
+		window.history.forward(); 
+		
+	}
+	
+	</script>
+
+
+	<script>
+		document.getElementById('tabelement').style.display='none';
+
+		if (localStorage.lastuser !== "{{inputinfo}}"){ // a sequence starts
+			localStorage.myval = "{{map_mode}}";
+		}
+		
+
+		if (localStorage.lastuser!== "{{None}}" && "{{inputinfo}}"!== "{{None}}" && localStorage.lastuser=="{{inputinfo}}") {
+			if(localStorage.lastmode !== "{{map_mode}}") {
+				document.getElementById('tabelement').style.display='block';
+
+				if(localStorage.myval == "{{'covid19trace'}}"){ //started with mobility 
+					if ("{{map_mode}}" == "{{'covid19trace'}}"){
+						changetab('mobility');
+						// document.getElementById('mobility').setAttribute('onclick', 'goBack("mobility")');
+						document.getElementById('contact').setAttribute('onclick', 'goForward()');
+					}
+					else if ("{{map_mode}}" == "{{'contact tracing'}}") {
+						changetab('contact');
+						document.getElementById('mobility').setAttribute('onclick', 'goBack()');
+						// document.getElementById('contact').setAttribute('onclick', 'goForward("contact")');
+					}
+				}
+				else if(localStorage.myval == "{{'contact tracing'}}"){
+					if ("{{map_mode}}" == "{{'covid19trace'}}"){
+						changetab('mobility');
+						// document.getElementById('mobility').setAttribute('onclick', 'goBack("mobility")');
+						document.getElementById('contact').setAttribute('onclick', 'goBack()');
+					}
+					else if ("{{map_mode}}" == "{{'contact tracing'}}") {
+						changetab('contact');
+						document.getElementById('mobility').setAttribute('onclick', 'goForward()');
+						// document.getElementById('contact').setAttribute('onclick', 'goForward("contact")');
+					}
+				}
+
+			}
+		}
+		
+
+		
+		localStorage.lastmode= "{{map_mode}}";
+		localStorage.lastuser= "{{inputinfo}}";
+		// console.log('lastmode', localStorage.lastmode, localStorage.myval);
+
+	</script>
 
 
   	<script>
@@ -163,17 +363,18 @@
 
 
       var map = L.map('map');
+      var group1 = L.featureGroup();
       if ('{{map_mode}}' == '{{""}}'){
-      	map.setView([23.732568, 90.385165], 13);
+      	map.setView([23.806695, 90.428535], 12);
       }
       else {
-      	map.setView(["{{midlat}}", "{{midlon}}"], 14);
+      	map.setView(["{{midlat}}", "{{midlon}}"], 12);
       }
 
       // google basemap
       L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{
       	attribution: 'BUET | Google Maps',
-      	maxZoom:20,
+      	maxZoom:21,
       	subdomains:['mt0','mt1','mt2','mt3']
       }).addTo(map);
 
@@ -228,6 +429,7 @@
 	      	long = count_traj[index][1];
 	      	freq = count_traj[index][2];
 	      	rad = count_traj[index][3];
+	      	timespent = count_traj[index][4];
 	      	uid = count_traj[index][5];
 	      	rel_opacity = freq/max_freq;
 	      	if (rel_opacity < 0.1){ rel_opacity = 0.1}
@@ -239,9 +441,9 @@
 		      		fillColor: "#e83535",
 		      		fillOpacity: rel_opacity,
 		      		radius: rad*1.1
-		      	}).addTo(map);
-		      	var strfreq = count_traj[index][2].toString();
-		      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(uid);
+		      	}).addTo(group1);
+		      	var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString() + "hrs";
+		      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strinfo);
 		      	circleref.bindPopup(circlepopup);
 		      	circleref.on('mouseover', function(evt){
 		      		this.openPopup();
@@ -256,9 +458,9 @@
 		      		fillColor: "#34a0ed",
 		      		fillOpacity: rel_opacity,
 		      		radius: rad
-		      	}).addTo(map);
-		      	var strfreq = count_traj[index][2].toString();
-		      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(uid);
+		      	}).addTo(group1);
+		      	var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString() + "hrs";
+		      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strinfo);
 		      	circleref.bindPopup(circlepopup);
 		      	circleref.on('mouseover', function(evt){
 		      		this.openPopup();
@@ -269,6 +471,7 @@
 	      	}
 
 	      }
+	      map.addLayer(group1);
 	      function getColor(d){ 
 	      		return d == 0 ? '#db2727':
 	      				d == 1 ? '#1e83f7':
@@ -298,6 +501,7 @@
 		      	long = count_traj[index][1];
 		      	freq = count_traj[index][2];
 		      	rad = count_traj[index][3];
+		      	timespent = count_traj[index][4];
 		      	uid = count_traj[index][5];
 		      	puid = false;
 		      	rel_opacity = freq/max_freq;
@@ -317,8 +521,9 @@
 			      		fillColor: "#e83535",
 			      		fillOpacity: rel_opacity,
 			      		radius: rad*1.1
-			      	}).addTo(map);
-			      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(uid);
+			      	}).addTo(group1);
+			      	var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString() + "hrs";
+			      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strinfo);
 			      	circleref.bindPopup(circlepopup);
 			      	circleref.on('mouseover', function(evt){
 			      		this.openPopup();
@@ -333,8 +538,9 @@
 			      		fillColor: "#34a0ed",
 			      		fillOpacity: rel_opacity,
 			      		radius: rad
-			      	}).addTo(map);
-			      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(uid);
+			      	}).addTo(group1);
+			      	var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString() + "hrs";
+			      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strinfo);
 			      	circleref.bindPopup(circlepopup);
 			      	circleref.on('mouseover', function(evt){
 			      		this.openPopup();
@@ -344,6 +550,7 @@
 			      	})
 		      	}
 	      	}	
+	      	map.addLayer(group1);
 	      	function getColor(d){ 
 	      		return d == 0 ? '#db2727':
 	      				d == 1 ? '#1e83f7':
@@ -364,19 +571,19 @@
 		      	
   		}
 
-  		if ('{{map_mode}}' != '{{""}}'){
-  			//add legends
-	      var legend = L.control({position: 'topright'});
-	      legend.onAdd = function(map){
-	      	var div = L.DomUtil.create('div','info legend'),
-	      	grades = ["1hr : 6metres"]; 
-	      	//style of i: width:18px;height:18px;float:left;opacity:0.7;
-	      	div.innerHTML += '<div style="border: 2px solid black; font-size:105%; margin-right:20px;">' + grades[0] + '</div> <br>';
+  		// if ('{{map_mode}}' != '{{""}}'){
+  		// 	//add legends
+	   //    var legend = L.control({position: 'topright'});
+	   //    legend.onAdd = function(map){
+	   //    	var div = L.DomUtil.create('div','info legend'),
+	   //    	grades = ["1hr : 6metres"]; 
+	   //    	//style of i: width:18px;height:18px;float:left;opacity:0.7;
+	   //    	div.innerHTML += '<div style="border: 2px solid black; font-size:105%; margin-right:20px;">' + grades[0] + '</div> <br>';
 	      	
-	      	return div;
-	       };
-	       legend.addTo(map);
-  		}
+	   //    	return div;
+	   //     };
+	   //     legend.addTo(map);
+  		// }
     </script>
 
 
@@ -388,12 +595,18 @@
 	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
 	<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.js"></script>
 
+	<script type="text/javascript" src="media/singleid_ctrace.js"></script>
+	<script type="text/javascript" src="media/multipleid_ctrace.js"></script>
+
 	<script>
+		var prev_id = "None";
 		if ('{{map_mode}}' == '{{"covid19trace"}}'){
 			if ('{{file_name}}' == '{{"None"}}') {
+
 				$(document).ready( function () { 
+
 				    $('.display').DataTable({
-				    	'scrollY' : "310px",
+				    	'scrollY' : "300px",
 				    	"scrollCollapse":true,
 				    	'paging':false,
 				    	'searching':false,
@@ -415,7 +628,7 @@
 			else{
 				$(document).ready( function () { 
 				    $('.display').DataTable({
-				    	'scrollY' : "310px",
+				    	'scrollY' : "300px",
 				    	"scrollCollapse":true,
 				    	'paging':false,
 				    	'searching':false,
@@ -440,7 +653,7 @@
 			if ('{{file_name}}' == '{{"None"}}') {
 				$(document).ready( function () { 
 				    $('.display').DataTable({
-				    	'scrollY' : "310px",
+				    	'scrollY' : "300px",
 				    	"scrollCollapse":true,
 				    	'paging':false,
 				    	'searching':false,
@@ -450,16 +663,27 @@
 				    	},
 
 				    	'columns': [
-				    		{'data': "ID"}
-				    	]
+				    		{'data': "ID"},
+				    		{'data': "TimeSpent"}
+				    	],
+				    	'order':[[1,'desc']]
 				    });
-					
+				    
+				    var table = $('#exampletable').DataTable();
+				    $('#exampletable').on('click','tr', function(){
+				    	$('#exampletable tr').removeClass('highlight');
+				    	$(this).addClass('highlight');
+				    	var data = table.row(this).data();
+				    	curr_id = data['ID'];
+				    	singleid_ctrace(curr_id, "{{max_frequency}}", "{{input_uid}}");
+				    });
+				    
 				});
 			}
 			else {
 				$(document).ready( function () { 
 				    $('.display').DataTable({
-				    	'scrollY' : "310px",
+				    	'scrollY' : "300px",
 				    	"scrollCollapse":true,
 				    	'paging':false,
 				    	'searching':false,
@@ -469,9 +693,20 @@
 				    	},
 
 				    	'columns': [
-				    		{'data': "ID"}
+				    		{'data': "ID"},
+				    		{'data': "TimeSpent"}
 				    		// {'data': "NumberContacted"}
-				    	]
+				    	],
+				    	'order':[[1,'desc']]
+				    });
+
+				    var table = $('#exampletable').DataTable();
+				    $('#exampletable').on('click','tr', function(){
+				    	$('#exampletable tr').removeClass('highlight');
+				    	$(this).addClass('highlight');
+				    	var data = table.row(this).data();
+				    	curr_id = data['ID'];
+				    	multipleid_ctrace(curr_id, "{{max_frequency}}", "{{input_uid}}");
 				    });
 					
 				});

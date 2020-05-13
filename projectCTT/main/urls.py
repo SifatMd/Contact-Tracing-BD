@@ -7,6 +7,7 @@ from . import views
 urlpatterns = [
 	path('', views.MapView, name="MapView"),
 	path('heatmap/', views.HeatMap, name="HeatMap"),
+	path('help/', views.Guide, name="Guide"),
 ]
 
 

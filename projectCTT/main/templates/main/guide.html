@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+
+    <!-- Leaflet and Plugins -->
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.6.0/leaflet.css">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.6.0/leaflet-src.js"></script>
+
+    
+    <script src="https://code.jquery.com/jquery-2.2.4.js" integrity="sha256-iT6Q9iMJYuQiMWNd9lDyBUStIq/8PuOW33aOqmvFpqI=" crossorigin="anonymous"></script>
+
+
+    <style type="text/css">
+    	@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@600&display=swap');
+
+      html, body {
+        height: 100%;
+      }
+      
+
+	.container {
+		  width: 100%;
+      height: 100%;
+      margin: 0px 0px 0px 0px;
+      padding: 0px 0px 0px 0px; 
+	  }
+
+	  .textclass {
+	  	width: 80%;
+	  	margin: 30px 20px 50px 50px;
+	  	font-family: 'Open Sans', sans-serif;
+	  }
+	  p {
+	  	font-size: 110%;
+	  	margin-bottom: 5px;
+	  }
+ 
+	div.transbox {
+	  margin: 10px;
+	  /*background-color: #bdecff;*/
+	  background: rgba(189, 236, 255, 0.3);
+	  border: 1px solid white;
+	  /*opacity: 0.5;*/
+	}
+
+	div.transbox p {
+	  margin: 10px;
+	  font-weight: bold;
+	  color: #363636; 
+	}
+    </style>
+ 
+	<title>BUET Contact Tracing</title>
+
+</head>
+<body>
+	<div class="container col-12">
+	<!-- Navbar -->
+  	<nav class="navbar navbar-dark bg-dark" style="margin: 0px; padding: 0px 0px 0px 18px; height: 7%;">
+  		<a href="/" class="navbar-brand">
+  			BUET Contact Tracing
+  		</a>
+  		<ul class="navbar-nav" style="flex-direction: row; margin-right: 20px; font-size: 110%;">
+  			<li class="nav-item">
+  				<a href="/" class="nav-link" style="color: white; margin-right: 20px;">Home</a>
+  			</li>
+  			<li class="nav-item">
+  				<a href="/heatmap" class="nav-link" style="color: white; margin-right: 20px;">HeatMap</a>
+  			</li>
+  			<li class="nav-item">
+  				<a href="#" class="nav-link">Help</a>
+  			</li>
+  		</ul>
+  	</nav>
+
+
+
+  	<div class="col-12 textclass">
+  		<h2 style="margin-bottom: 10px;">Objective</h2>
+  		<p>To be able to trace Contact and Mobility of Covid-19 patients.</p>
+  		<p>
+		The main objective of this system is to support the Contact Tracing of Covid-19 patients. The contract tracing essentially finds users who have come in direct contact with a Covid-19 patient or who are in contact with other users who have already been in contact with the Covid-19 patient.
+		</p>
+		<p>
+			The assumption is we have a database of all users' Mobility data collected by the telecommunication companies. All the mobile numbers are anonymized using a distinct anonymous ID.
+		</p>
+
+		<h2 style="margin-top: 30px;">Mobility Tracing</h2>
+		
+		<ul>
+			<li>Enter a User Id into the input box to see which places this person visited in the last 14 days. The query also shows time spent and frequency of visits to each distinct location. </li>
+			
+			<div class="transbox">
+				<p style="font-size: 98%;">Enter "AAH03JAAQAAAO9VAAA" or "AAH03JAAQAAAO9VAAN" in the input box and click "Mobility Trace" button. The map will show the locations visited by the user and the table will show relevant details.</p>
+			</div>
+			
+			<li>Hovering over the circles will show details for that location.</li>
+			<li>The interface also has the functionality of querying the mobility trace of a group of people by uploading a CSV file containing a list of User Ids. The <a href="/media/help/Upload.csv" download="Upload.csv" >CSV</a> file contains a list of User IDs, one ID in a row. </li>
+		</ul>
+
+
+		<h2 style="margin-top: 30px">Contact Tracing</h2>
+		<ul>
+			<li>Enter a User Id of a Covid-19 patient to see his/her contact trace, i.e. the persons the patient came in contact with. The query returns all the contacted persons’ User IDs and time spent with the patient. </li>
+
+			<div class="transbox">
+				<p style="font-size: 98%;">Enter "AAH03JAAQAAAO9VAAE" or "AAH03JAAQAAAO9VAAa" in the input box and click "Contact Tracing" button. The map and table will show relevant information about the people that came in contact with the input user.</p> 
+			</div>
+			
+			<li>Hovering over a circle will show the associated UID.</li>
+			<li>The interface also has the capabilities of querying about a number of patients via a <a download="Upload.csv" href="/media/help/Upload.csv">CSV</a> file.</li>
+			<li>You can also select on a row in the table to better identify the selected user in the map.</li>
+		</ul>
+
+		<h2 style="margin-top: 30px;">HeatMap</h2>
+		<p>Shows a heatmap of visited places by all the Covid19 infected persons present in the database. The places where higher frequency of visits are present will have more opaque circles in appearance.</p>
+
+		<h2 style="margin-top: 30px;">Technical Details</h2>
+		<p>The contact tracing of a Covid-19 patient is challenging as they encounter lots of other users in their journey for the last 14 days. We assume that we have access to the mobility traces of all users in the system. Now, when a new Covid-19 patient is identified, we first search for his (or her) mobility traces in the database using his id (e.g., mobile phone number). After finding his mobility trace as a sequence of (location, time) pairs, we need to find who are other users whose (location, time) pair matches with any of the (location, time) pairs of the Covid-19 patient. Having a database of size in terabytes containing the mobility traces of millions of users for the last 14 days, it is a daunting task to find such a match. A brute-force approach to solve this problem requires hours to find the contact trace of a single patient. We develop a hierarchical multi-level index, namely QR-tree that can efficiently find matches between users and the Covid-19 patient. </p>
+
+
+		<h2 style="margin-top: 30px;">Privacy Policy</h2>
+		<p>The assumption is that we have a database of all users' mobility data collected by the telecommunication companies. All the mobile numbers are anonymized using a distinct anonymous ID.</p>
+		<p>The system has broadly two authorization levels for now: 
+
+		<ul>
+			<li>Tracers: These users have the access to trace and analyze  mobility/contact given anonymous IDs. These users are never shown any identification information (e.g., mobile number) about the users.</li>
+			<li>Code Breaker: These users have the access to code-decode between mobile numbers and their anonymous IDs. Each such coding/decoding query is logged and subject to review by the central authority. These users also DO NOT have access to the query interfaces and MUST not have any access to a separate tracer account.</li>
+		</ul>
+
+		</p>
+
+		<h2 style="margin-top: 30px">Notes</h2>
+		<p>
+			<ul>
+				<li>The radius of the circle at any location is determined by the cumulative time spent at that location. For example, if the total time spent at a location is 1 hour, then the radius of the circle is 3 meters; if 2 hours, radius is 6 meters and so on. For example, when I input “01701234504” for Mobility Trace, then the red circle in the map at Swamibag indicates that approximately 5 hours have been spent there making the radius of the circle 15 meters.</li>
+				<li>On the other hand, Opacity of a circle is determined by the Number of Visits to that location. More visits to a location will make the circle more opaque.</li>
+			</ul>
+		</p>
+
+  	</div>
+
+
+
+  
+  </div>
+
+
+
+
+
+</body>
+</html>
