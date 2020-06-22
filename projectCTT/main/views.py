@@ -704,6 +704,15 @@ def MapView(request):
 	map_mode = ""
 	template_name = "main/index_new.html"
 
+	Controls = {}
+	if request.method == 'POST':
+		Controls['range1'] = request.POST.get('range1')
+		Controls['range2'] = request.POST.get('range2')
+		Controls['range3'] = request.POST.get('range3')
+		Controls['EL'] = request.POST.get('EL')
+		Controls['RM'] = request.POST.get('RM')
+	print('Controls are:::::::', Controls)
+	
 
 	if request.method == 'POST' and 'document' in request.FILES: ######### file has been uploaded to server
 		actiontype = request.POST.get('action')
@@ -726,14 +735,14 @@ def MapView(request):
 				print("inside file exception")
 				os.remove(file_name)
 				return render(request=request, template_name=template_name, context={'file_name':None, 
-		'data_present':False, 'map_mode':"", 'inputinfo':inputinfo, 'valid_input':valid_input})
+		'data_present':False, 'map_mode':"", 'inputinfo':inputinfo, 'valid_input':valid_input, 'Controls':Controls})
 
 			#delete file
 			os.remove(file_name)
 
 			context = {'inputinfo':inputinfo, 'data_present':data_present, 'count_traj':json_count_traj,\
 			 'max_frequency': max_frequency, 'map_mode':map_mode, 'midlat':midlat, 'midlon':midlon, \
-			 'file_name':uploaded_file.name, 'valid_input':valid_input}
+			 'file_name':uploaded_file.name, 'valid_input':valid_input, 'Controls':Controls}
 
 			return render(request=request, template_name=template_name, context=context)
 
@@ -753,7 +762,7 @@ def MapView(request):
 				print('inside file ct exception')
 				os.remove(file_name)
 				return render(request=request, template_name=template_name, context={'file_name':None, 
-		'data_present':False, 'map_mode':"", 'inputinfo':inputinfo, 'valid_input':valid_input})
+		'data_present':False, 'map_mode':"", 'inputinfo':inputinfo, 'valid_input':valid_input, 'Controls':Controls})
 
 
 			#delete file
@@ -761,7 +770,7 @@ def MapView(request):
 
 			context = {'inputinfo':inputinfo, 'data_present':data_present, 'count_traj':json_count_traj,\
 			 'max_frequency': max_frequency, 'map_mode':map_mode, 'midlat':midlat, 'midlon':midlon, \
-			 'file_name':uploaded_file.name, 'input_uids':json_input_uids, 'valid_input':valid_input}
+			 'file_name':uploaded_file.name, 'input_uids':json_input_uids, 'valid_input':valid_input, 'Controls':Controls}
 
 			return render(request=request, template_name=template_name, context=context)
 
@@ -776,7 +785,7 @@ def MapView(request):
 		actiontype = request.POST.get('action')
 		geo = GeoNames(username='sifat578')
 		DBFILE = "media/sample_7MB_7.csv"
-		#print('reqpost', request.POST);
+		print('reqpost:', request.POST, '-----------------', request);
 
 		if mobileno.isnumeric() == False:
 			input_uid = mobileno
@@ -815,7 +824,7 @@ def MapView(request):
 		if len(mobileno)==0 or input_uid not in all_uids:
 			valid_input = False
 			return render(request=request, template_name=template_name, context={'file_name':None, 
-		'data_present':False, 'map_mode':"", 'inputinfo':inputinfo, 'valid_input':valid_input})
+		'data_present':False, 'map_mode':"", 'inputinfo':inputinfo, 'valid_input':valid_input, 'Controls':Controls})
 
 
 		print('INPUTUID', input_uid)
@@ -938,7 +947,7 @@ def MapView(request):
 
 			context = {'inputinfo':inputinfo, 'data_present':data_present, 'count_traj':json_count_traj,\
 			 'max_frequency': max_frequency, 'map_mode':map_mode, 'midlat':midlat, 'midlon':midlon,\
-			 'file_name':file_name, 'valid_input':valid_input}
+			 'file_name':file_name, 'valid_input':valid_input, 'Controls':Controls}
 
 			return render(request=request, template_name=template_name, context=context)
 
@@ -953,7 +962,7 @@ def MapView(request):
 
 			context = {'inputinfo':inputinfo, 'data_present':data_present, 'count_traj':json_count_traj,\
 			 'max_frequency': max_frequency, 'map_mode':map_mode, 'midlat':midlat, 'midlon':midlon,\
-			 'file_name':file_name, 'input_uid': input_uid, 'valid_input':valid_input}
+			 'file_name':file_name, 'input_uid': input_uid, 'valid_input':valid_input, 'Controls':Controls}
 
 			return render(request=request, template_name=template_name, context=context)
 
@@ -961,7 +970,7 @@ def MapView(request):
 
 
 	return render(request=request, template_name=template_name, context={'file_name':None, 
-		'data_present':False, 'map_mode':"", 'inputinfo':inputinfo, 'valid_input':valid_input})
+		'data_present':False, 'map_mode':"", 'inputinfo':inputinfo, 'valid_input':valid_input, 'Controls':Controls})
 
 
 

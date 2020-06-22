@@ -25,7 +25,7 @@ SECRET_KEY = 's)7gbkm84%zs0f*$vyc%d8gnqiit)&jgxxq-pyg3r^89=-(xer'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['ctracing.datalab.buet.io']
+ALLOWED_HOSTS = []
 
 
 # Application definition
