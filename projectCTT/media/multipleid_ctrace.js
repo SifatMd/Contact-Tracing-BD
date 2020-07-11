@@ -22,14 +22,29 @@ function multipleid_ctrace(selected_uid, max_frequency, input_uid) {
   for (index=0; index < count_traj.length; index++){
   	lat = count_traj[index][0];
     long = count_traj[index][1];
-    freq = count_traj[index][2];
+    exp_level = count_traj[index][2];
     rad = count_traj[index][3];
     timespent = count_traj[index][4];
     uid = count_traj[index][5];
+    freq = count_traj[index][6];
+
     puid = false;
     rel_opacity = freq/max_freq;
     if (rel_opacity < 0.1){ rel_opacity = 0.1}
     else if (rel_opacity > 0.88) {rel_opacity = 0.88};
+
+    if (exp_level == 1){
+      value_fillopacity = '#3ea383';
+      circle_color = '#1c9e75';
+    }
+    else if (exp_level == 2){
+      value_fillopacity = "#185f99";
+      circle_color = "#1208cc";
+    }
+    else if (exp_level==3){
+      value_fillopacity = '#6c259c';
+      circle_color = "#4f0f94";
+    }
 
     for (i1=0; i1 < input_uids.length; i1 ++) {
       if (uid == input_uids[i1]) {
@@ -74,8 +89,8 @@ function multipleid_ctrace(selected_uid, max_frequency, input_uid) {
     }
     else {
       var circleref = L.circle([lat, long], {
-        color: 'blue',
-        fillColor: "#34a0ed",
+        color: circle_color,
+        fillColor: value_fillopacity,
         fillOpacity: rel_opacity,
         radius: rad
       }).addTo(group1);

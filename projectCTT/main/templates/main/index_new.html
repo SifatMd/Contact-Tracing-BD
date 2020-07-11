@@ -392,7 +392,7 @@
 					        {% if "range2" in Controls %}
 					        <input id="range2" type="range" name="range2" min="0" max="5" value="{{Controls.range2}}" step="1">
 					        {% else %}
-					        <input id="range2" type="range" name="range2" min="0" max="5" value="1" step="1">
+					        <input id="range2" type="range" name="range2" min="0" max="5" value="0" step="1">
 					        {% endif %}
 					    </div>
 					    <br>
@@ -402,7 +402,7 @@
 					        {% if "range3" in Controls %}
 					        <input id="range3" type="range" name="range3" min="0" max="59" value="{{Controls.range3}}" step="1">
 					        {% else %}
-					        <input id="range3" type="range" name="range3" min="0" max="59" value="20" step="1">
+					        <input id="range3" type="range" name="range3" min="0" max="59" value="1" step="1">
 					        {% endif %}
 					    </div>
 					  </div>
@@ -500,13 +500,13 @@
 	 						{% if file_name == None %}
 		 						<tr>
 		 							<th><span title="Locations visited by input user">Location</span></th>
-		 							<th><span title="Total time spent in respective locations">Time Spent(hrs)</span></th>
+		 							<th><span title="Total time spent in respective locations">Time Spent</span></th>
 		 							<th><span title="Number of visits to respective locations">Freq</span></th>
 		 						</tr>
 		 					{% else %}
 		 						<tr>
 		 							<th><span title="Locations visited by input user">Location</span></th>
-		 							<th><span title="Total time spent in respective locations">Time Spent(hrs)</span></th>
+		 							<th><span title="Total time spent in respective locations">Time Spent</span></th>
 		 							<th><span title="Number of visits to respective locations">Freq</span></th>
 		 							<th><span title="No of People in that location">No of Persons</span></th>
 		 						</tr>
@@ -515,13 +515,17 @@
 
 	 							{% if file_name == None %}
 	 								<tr>
-	 									<th><span title="User ID that came in contact">Contacted User ID</span></th>
-	 									<th><span title="Total time spent with infected patients">Contact Time(hrs)</span></th>
+	 									<th><span title="Serial Number">Serial</span></th>
+	 									<th><span title="User ID that came in contact">Contacted UID</span></th>
+	 									<th><span title="Time at which User ID was exposed">Exposure Moment</span></th>
+	 									<th><span title="No. of times User ID was exposed">Times Exposed</span></th>
 	 								</tr>
 	 							{% else %}
 	 								<tr>
-	 									<th><span title="User ID that came in contact">Contacted User ID</span></th>
-	 									<th><span title="Total time spent with infected patients">Contact Time(hrs)</span></th>
+	 									<th><span title="Serial Number">Serial</span></th>
+	 									<th><span title="User ID that came in contact">Contacted UID</span></th>
+	 									<th><span title="Time at which User ID was exposed">Moment of Exposure</span></th>
+	 									<th><span title="No. of times User ID was exposed">Times Exposed</span></th>
 	 								</tr>
 	 							{% endif %}
 
@@ -711,9 +715,7 @@
       var map = L.map('map', {
       	zoomControl: false
       });
-      L.control.zoom({
-      	position: 'topright'
-      }).addTo(map);
+      
 
       var group1 = L.featureGroup();
       if ('{{map_mode}}' == '{{""}}'){
@@ -733,6 +735,9 @@
 
       //add scale to map
       L.control.scale({
+      	position: 'bottomright'
+      }).addTo(map);
+      L.control.zoom({
       	position: 'bottomright'
       }).addTo(map);
 
@@ -758,7 +763,7 @@
 	      		fillOpacity: opacity,
 	      		radius: rad //50
 	      	}).addTo(map);
-	      	var strfreq = "Visited:" + freq.toString() + " times | " + count_traj[index][4].toString() + " hrs";
+	      	var strfreq = "Visited:" + freq.toString() + " times | " + count_traj[index][4].toString();// + " hrs";
 	      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strfreq);
 	      	circleref.bindPopup(circlepopup);
 	      	circleref.on('mouseover', function(evt){
@@ -780,20 +785,43 @@
 	      for (index=0; index < count_traj.length; index++){
 	      	lat = count_traj[index][0];
 	      	long = count_traj[index][1];
-	      	freq = count_traj[index][2];
+	      	exp_level = count_traj[index][2];
 	      	rad = count_traj[index][3];
 	      	timespent = count_traj[index][4];
 	      	uid = count_traj[index][5];
+	      	freq = count_traj[index][6];
+
 	      	rel_opacity = freq/max_freq;
 	      	if (rel_opacity < 0.1){ rel_opacity = 0.1}
 	      	else if (rel_opacity > 0.88) {rel_opacity = 0.88};
+
+	      	if (exp_level == 3){
+	      		// value_fillopacity = '#3ea383';
+	      		// circle_color = '#1c9e75';
+	      		value_fillopacity = '#35a4cc';
+	      		circle_color = "#35a4cc";
+	      		rad_factor = 1;
+	      	}
+	      	else if (exp_level == 2){
+	      		// value_fillopacity = "#185f99";
+	      		// circle_color = "#1208cc";
+	      		value_fillopacity = '#e69007';
+	      		circle_color = "#ff9d00";
+	      		rad_factor = 1.15;
+	      	}
+	      	else if (exp_level == 1){
+	      		value_fillopacity = '#6c259c';
+	      		circle_color = "#4f0f94";
+	      		rad_factor = 1.3;
+
+	      	}
 
 	      	if (uid == input_uid){ 
 		      	var circleref = L.circle([lat, long], {
 		      		color: 'red',
 		      		fillColor: "#e83535",
 		      		fillOpacity: rel_opacity,
-		      		radius: rad*1.1
+		      		radius: rad*1.4
 		      	}).addTo(group1);
 		      	var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString() + "hrs";
 		      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strinfo);
@@ -807,10 +835,10 @@
 	      	}
 	      	else {
 	      		var circleref = L.circle([lat, long], {
-		      		color: 'blue',
-		      		fillColor: "#34a0ed",
-		      		fillOpacity: rel_opacity,
-		      		radius: rad
+		      		color: circle_color,
+		      		fillColor: value_fillopacity,
+		      		fillOpacity: rel_opacity, //rel_opacity,
+		      		radius: rad*rad_factor
 		      	}).addTo(group1);
 		      	var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString() + "hrs";
 		      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strinfo);
@@ -827,18 +855,24 @@
 	      map.addLayer(group1);
 	      function getColor(d){ 
 	      		return d == 0 ? '#db2727':
-	      				d == 1 ? '#1e83f7':
+	      				d == 1 ? '#3ea383':
+	      				d==2 ? '#185f99':
+	      				d==3 ? '#6c259c':
 	      						'#4fb514';
 	      }
 	      //add legends
 	      var legend = L.control({position: 'topright'});
 	      legend.onAdd = function(map){
 	      	var div = L.DomUtil.create('div','info legend'),
-	      	grades = ["Covid Positive", "Contacted Persons"];
+	      	grades = [" Covid Positive", " Exposed Level 1", " Exposed Level 2", " Exposed Level 3"];
 	      	
 	      	//style of i: width:18px;height:18px;float:left;opacity:0.7;
-	      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(0) + ';"></i>' + grades[0] + '<br>';
-	      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(1) + ';"></i>' + grades[1];
+	      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(0) + ';margin-right:5px;"></i>' + grades[0] + '<br>';
+	      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(1) + ';margin-right:5px;margin-right:5px;"></i>' + grades[1] + '<br>'; 
+	      	//return div;
+	      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(2) + ';margin-right:5px;"></i>' + grades[2] + '<br>';
+	      	//return div;
+	      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(3) + ';margin-right:5px;"></i>' + grades[3];
 	      	return div;
 	       };
 	       legend.addTo(map);
@@ -848,18 +882,34 @@
   			var count_traj = JSON.parse("{{ count_traj | escapejs }}");
   			var input_uids = JSON.parse("{{ input_uids | escapejs }}");
   			var max_freq = "{{max_frequency}}";
+  			console.log(input_uids);
   			
   			for (index=0; index < count_traj.length; index++){
 		      	lat = count_traj[index][0];
 		      	long = count_traj[index][1];
-		      	freq = count_traj[index][2];
+		      	exp_level = count_traj[index][2];
 		      	rad = count_traj[index][3];
 		      	timespent = count_traj[index][4];
 		      	uid = count_traj[index][5];
+		      	freq = count_traj[index][6];
+
 		      	puid = false;
 		      	rel_opacity = freq/max_freq;
 		      	if (rel_opacity < 0.1){ rel_opacity = 0.1}
 		      	else if (rel_opacity > 0.88) {rel_opacity = 0.88};
+
+		      	if (exp_level == 1){
+		      		value_fillopacity = '#3ea383';
+	      			circle_color = '#1c9e75';
+		      	}
+		      	else if (exp_level == 2){
+		      		value_fillopacity = "#185f99";
+		      		circle_color = "#1208cc";
+		      	}
+		      	else if (exp_level==3){
+		      		value_fillopacity = '#6c259c';
+		      		circle_color = "#4f0f94";
+		      	}
 
 		      	for (i1=0; i1 < input_uids.length; i1 ++) {
 		      		if (uid == input_uids[i1]) {
@@ -887,8 +937,8 @@
 		      	}
 		      	else {
 		      		var circleref = L.circle([lat, long], {
-			      		color: 'blue',
-			      		fillColor: "#34a0ed",
+			      		color: circle_color,
+			      		fillColor: value_fillopacity,
 			      		fillOpacity: rel_opacity,
 			      		radius: rad
 			      	}).addTo(group1);
@@ -906,37 +956,30 @@
 	      	map.addLayer(group1);
 	      	function getColor(d){ 
 	      		return d == 0 ? '#db2727':
-	      				d == 1 ? '#1e83f7':
+	      				d == 1 ? '#3ea383':
+	      				d==2 ? '#185f99':
+	      				d==3 ? '#6c259c':
 	      						'#4fb514';
 		      }
 		      //add legends
 		      var legend = L.control({position: 'topright'});
 		      legend.onAdd = function(map){
 		      	var div = L.DomUtil.create('div','info legend'),
-		      	grades = ["Covid Positive", "Contacted Persons"];
+		      	grades = ["Covid Positive", "Exposed Level 1", "Exposed Level 2", "Exposed Level 3"];
 		      	
 		      	//style of i: width:18px;height:18px;float:left;opacity:0.7;
-		      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(0) + ';"></i>' + grades[0] + '<br>';
-		      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(1) + ';"></i>' + grades[1];
+		      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(0) + ';margin-right:5px;"></i>' + grades[0] + '<br>';
+		      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(1) + ';margin-right:5px;"></i>' + grades[1] + '<br>';
+			      	//return div;
+		      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(2) + ';margin-right:5px;"></i>' + grades[2] + '<br>';
+		      	//return div;
+		      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(3) + ';margin-right:5px;"></i>' + grades[3];
 		      	return div;
 		       };
 		       legend.addTo(map);
 		      	
   		}
 
-  		// if ('{{map_mode}}' != '{{""}}'){
-  		// 	//add legends
-	   //    var legend = L.control({position: 'topright'});
-	   //    legend.onAdd = function(map){
-	   //    	var div = L.DomUtil.create('div','info legend'),
-	   //    	grades = ["1hr : 6metres"]; 
-	   //    	//style of i: width:18px;height:18px;float:left;opacity:0.7;
-	   //    	div.innerHTML += '<div style="border: 2px solid black; font-size:105%; margin-right:20px;">' + grades[0] + '</div> <br>';
-	      	
-	   //    	return div;
-	   //     };
-	   //     legend.addTo(map);
-  		// }
     </script>
 
 
@@ -1016,10 +1059,17 @@
 				    	},
 
 				    	'columns': [
+				    		{'data': 'Serial'},
 				    		{'data': "ID"},
-				    		{'data': "TimeSpent"}
+				    		{'data': "ExposedMoment"},
+				    		{'data': "ExposedNo"}
 				    	],
-				    	'order':[[1,'desc']]
+				    	'order':[[0,'asc']],
+
+				    	"columnDefs": [{
+				    		"targets": [0],
+				    		"visible": false
+				    	}]
 				    });
 				    
 				    var table = $('#exampletable').DataTable();
@@ -1046,11 +1096,17 @@
 				    	},
 
 				    	'columns': [
+				    		{'data': 'Serial'},
 				    		{'data': "ID"},
-				    		{'data': "TimeSpent"}
+				    		{'data': "ExposedMoment"},
+				    		{'data': "ExposedNo"}
 				    		// {'data': "NumberContacted"}
 				    	],
-				    	'order':[[1,'desc']]
+				    	'order':[[0,'asc']], 
+				    	"columnDefs": [{
+				    		"targets": [0],
+				    		"visible": false
+				    	}]
 				    });
 
 				    var table = $('#exampletable').DataTable();

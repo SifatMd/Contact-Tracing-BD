@@ -16,6 +16,9 @@ from subprocess import Popen, PIPE, STDOUT
 from django.shortcuts import render
 from django.core.files.storage import FileSystemStorage
 
+import requests
+import urllib.parse
+
 
 def generate_date(dt):
 	year = int(dt[:4])
@@ -26,13 +29,14 @@ def generate_date(dt):
 
 
 def time_to_radius(hours):
-	res = [i for i in range(3,78,3)]
+	# res = [i for i in range(3,78,3)]
+	res = [i for i in range(10,85,3)]
 	hoursint = round(hours)
 	if hoursint > 24:
 		hoursint = 25
 	
 	if hoursint == 0:
-		return 2
+		return 8
 	else:
 		return res[hoursint-1]
 	 
@@ -54,7 +58,7 @@ def save_json_mobility(data):
 	for row in data:
 		newdict = {}
 		newdict['Location'] = row[0]
-		newdict['Time Spent'] = round(float(row[1]),1)
+		newdict['Time Spent'] = row[1] #round(float(row[1]),1)
 		newdict['Frequency'] = row[2]
 		data_list.append(newdict)
 
@@ -67,7 +71,7 @@ def save_file_mobility(data):
 	for row in data:
 		newdict = {}
 		newdict['Location'] = row[0]
-		newdict['Time Spent'] = round(float(row[1]),1)
+		newdict['Time Spent'] = row[1] #round(float(row[1]),1)
 		newdict['Frequency'] = row[2]
 		newdict['PersonNo'] = row[3]
 		data_list.append(newdict)
@@ -139,6 +143,18 @@ def get_heatmap_opacity(all_freqs, max_freq, min_freq):
 	return all_opacities
 
 
+def convert_appropriate_time(timespent):
+	ans = ""
+	if timespent < 60:
+		ans = str(timespent) + ' seconds'
+	elif timespent < 3600:
+		t1 = round(float(timespent/60), 1)
+		ans = str(t1) + ' minutes'
+	else:
+		t1 = round(float(timespent/3600), 1)
+		ans = str(t1) + ' hours'
+	return ans 
+
 
 def calculate_time_spent(date1, time1, time_spent1, date2, time2, time_spent2):
 	timestart1 = time.mktime(datetime.strptime(f"{date1} {time1}", "%Y%m%d %H:%M:%S").timetuple())
@@ -165,7 +181,7 @@ def calculate_time_spent(date1, time1, time_spent1, date2, time2, time_spent2):
 	
 
 
-def file_upload_covid(file_name, DBFILE):
+def file_upload_covid(file_name, DBFILE, Controls):
 	dict = {}
 	geo = GeoNames(username='sifat578')
 	latest_date = date(1900,1,1)
@@ -180,141 +196,143 @@ def file_upload_covid(file_name, DBFILE):
 				uid = row 
 				all_inputuids.append(str(uid[0]))
 
-	# file = open(file_name, 'r')
-	# for line in file:
-	# 	temp = line.rsplit()
-	# 	if len(temp) > 0:
-	# 		all_inputuids.append(temp[0])
-	# file.close() 
+
+	arg_sp = str(Controls['range1'])
+	temp1 = int(Controls['range2'])*60 + int(Controls['range3'])
+	arg_tp = str(temp1)
+	#arg_el = str(Controls['EL'])
+	arg_el = "0"
+	if Controls['RM'] == 'EET':
+		arg_rm = str(1)
+	elif Controls['RM'] == 'NOE':
+		arg_rm = str(2)
 	
-	#print(all_inputuids)
-
-	with open(DBFILE, "r+") as f:
-		csvreader = csv.reader(f)
-		for row in csvreader:
-			uid, date1, time_str, dummy, lat, lon = row
-			if uid in all_inputuids:
-				temp, y, m, d = generate_date(date1)
-				if (latest_date - temp).days < 0:
-					latest_date = latest_date.replace(year=y, month=m, day=d)
-					#print('latest_date' , latest_date)
-			
-	print('latest', latest_date)
-	with open(DBFILE, "r+") as f:
-		csvreader = csv.reader(f)
-		limit=0
-		for row1 in csvreader:
-			uid, date1, time_str, dummy, lat, lon = row1
-			temp, y, m, d = generate_date(date1)
-
-			if (latest_date-temp).days > 14 or uid not in all_inputuids:
-				continue
-
-			if uid not in dict:
-				dict[uid] = []
-			dict[uid].append((date1, time_str, dummy, lat, lon))
-			limit -= 1
-			#if limit == 0:
-			#	break
+	#make tempurl here (later)
+	tempurl = "sp=" + arg_sp + "&tp=" + arg_tp + "&el=" + arg_el + "&rm=" + arg_rm + "&tid=" 
+	for i in range(len(all_inputuids)-1):
+		tempurl += all_inputuids[i] + ","
+	tempurl += all_inputuids[-1]
 
 
-	# sort trajectory by time
-	for uid, points in dict.items():
-		points.sort(key=lambda x: (x[0], x[1]))
+	#address = "http://127.0.0.1:10001/ctq?"
+	address = "http://ec2-3-132-194-145.us-east-2.compute.amazonaws.com:10001/ctq?"
+	#tempurl = 'sp=2&tp=15&el=3&rm=2&tid=AAH03JAC8AAAbXwADw,AAH03JAC6AAAczuAC0'
+	url = urllib.parse.quote(tempurl)
+	address = address + url
+	temp_dict = {'key':'val'}
+	print('Address is', address)
+	response = requests.post(address, data = temp_dict)
+	print('RESPONSE: ', response) 
+
+	allUids = []
+	allVisitedPoints = {}
+	allExposedPoints = {}
+	allExposureLevel = {}
+	allExposedTime = {}
+	allExposureNo = {}
+
+
+	response_json = response.json()
+	for key,val in response_json.items():
+		allUids.append(key)
+		allVisitedPoints[key] = []
+		allExposedPoints[key] = []
+		for i in range(len(val['allPoints'])):
+			hold = val['allPoints'][i]['valueList']
+			#print(hold[0], ' = ', hold[1]['val0'], ' = ', hold[1]['val1'])
+			allVisitedPoints[key].append((int(hold[0]), float(hold[1]['val0']), float(hold[1]['val1']) ))
+
+		for i in range(len(val['exposedPoints'])):
+			hold = val['exposedPoints'][i]['valueList']
+			#print(hold[0], ' = ', hold[1]['val0'], ' = ', hold[1]['val1'])
+			allExposedPoints[key].append((int(hold[0]), float(hold[1]['val0']), float(hold[1]['val1']) ))
+
+		allExposureLevel[key] = int(val['exposureLevel'])
+		allExposedTime[key] = val['exposedTimestamp']
+		allExposureNo[key] = int(val['noOfExposures'])
+
+
+	#calculate time spent
+	for uid, attr in allVisitedPoints.items():
+		attr.sort(key=lambda x: x[0])
 
 
 	#calculating time spent 
-	for uid, points in dict.items(): 
-		for i in range(len(dict[uid]) - 1):
-			date_0 = dict[uid][i][0]
-			date_1 = dict[uid][i+1][0]
+	for uid, points in allVisitedPoints.items(): 
+		if allExposureLevel[uid] == 0:
+			for i in range(len(allVisitedPoints[uid]) - 1):
+				ts_0 = int(points[i+1][0]) - int(points[i][0])
+				allVisitedPoints[uid][i] = allVisitedPoints[uid][i] + (ts_0, ) #time spent added to traj
 
-			time_0 = dict[uid][i][1]
-			time_1 = dict[uid][i+1][1]
-
-			#gives a single integer of date+time
-			ts_0 = time.mktime(datetime.strptime(f"{date_0} {time_0}", "%Y%m%d %H:%M:%S").timetuple())
-			ts_1 = time.mktime(datetime.strptime(f"{date_1} {time_1}", "%Y%m%d %H:%M:%S").timetuple())
-
-			dict[uid][i] = dict[uid][i] + (ts_1 - ts_0, ) #time spent added to traj
-
-		dict[uid][-1] = dict[uid][-1] + (time.mktime(datetime.strptime(f"{dict[uid][-1][0]} 23:59:59", "%Y%m%d %H:%M:%S").timetuple())\
-			- time.mktime(datetime.strptime(f"{dict[uid][-1][0]} {dict[uid][-1][1]}", "%Y%m%d %H:%M:%S").timetuple()), )
+			# dict[uid][-1] = dict[uid][-1] + (time.mktime(datetime.strptime(f"{dict[uid][-1][0]} 23:59:59", "%Y%m%d %H:%M:%S").timetuple())\
+			# 	- time.mktime(datetime.strptime(f"{dict[uid][-1][0]} {dict[uid][-1][1]}", "%Y%m%d %H:%M:%S").timetuple()), )
+			temptime = datetime.fromtimestamp(int(allVisitedPoints[uid][-1][0]))
+			date0, time0 = temptime.strftime('%Y-%m-%d %H:%M:%S').split() 
+			ts_last = int(time.mktime(datetime.strptime(f"{date0} 23:59:59", "%Y-%m-%d %H:%M:%S").timetuple())) - int(allVisitedPoints[uid][-1][0])
+			allVisitedPoints[uid][-1] = allVisitedPoints[uid][-1] + (ts_last, )
 
 
-	# calculating frequency and total time spent
 	max_frequency = 0
 	groupwise_dict = {}
 	alllatlons = []
-	for uid, points in dict.items():
-		groupwise_dict[uid] = {}
-		for p in points:
-			date1, time_str, dummy, lat, lon, timespent = p 
-			if [float(lat), float(lon)] not in alllatlons:
-				alllatlons.append([float(lat), float(lon)])
-			if (lat,lon) not in groupwise_dict[uid]:
-				groupwise_dict[uid][(lat,lon)] = [0,0] # freq, total time spent
+	for uid, points in allVisitedPoints.items():
+		if allExposureLevel[uid] == 0:
+			#groupwise_dict[uid] = {}
+			for p in points:
+				timestamp, lat, lon, timespent = p 
+				lat1 = round(float(lat), 6)
+				lon1 = round(float(lon), 6)
+				if [lat1, lon1] not in alllatlons:
+					alllatlons.append([lat1, lon1])
+				if (lat1,lon1) not in groupwise_dict:
+					groupwise_dict[(lat1,lon1)] = [0, 0, []] # freq, total time spent, visited by uid
 
-			groupwise_dict[uid][(lat,lon)][0] += 1
-			temp1 = groupwise_dict[uid][(lat,lon)][0]
-			groupwise_dict[uid][(lat,lon)][1] += int(timespent)
+				groupwise_dict[(lat1,lon1)][0] += 1
+				temp1 = groupwise_dict[(lat1,lon1)][0]
+				groupwise_dict[(lat1,lon1)][1] += int(timespent)
+				groupwise_dict[(lat1, lon1)][2].append(uid)
 
-			if temp1 > max_frequency:
-				max_frequency = temp1
+				if temp1 > max_frequency:
+					max_frequency = temp1
 
-
-	midlat, midlon = find_center(alllatlons)
-
-	#read all reverse geocodes
-	all_geocodes = {}
-	file = open('media/reverse_geocodes_7MB_6.txt','r')
-	for line in file:
-		temp = line.split(',')
-		all_geocodes[(temp[0], temp[1])] = temp[2].rstrip()
-
-	file.close()
-
+	
+	midlat, midlon = find_center(alllatlons) 
 
 	count_traj_list = []
-	table_data = {}
 	for key, val in groupwise_dict.items():
-		for pos, points in val.items():
-			lat,lon = pos 
-			freq, timespent = points[0], points[1]
-			timespent = round((timespent/3600),1)
-			radius = time_to_radius(timespent) 
-			if (lat,lon) in all_geocodes:
-				loc_name = all_geocodes[(lat,lon)]
-			else:
-				loc_name = str(geo.reverse(query=(lat, lon), exactly_one=False,timeout=5)[0])
-				loc_name = loc_name.split(",")[0]
-			
-			opacity = get_opacity(freq)
-			count_traj_list.append((float(lat), float(lon), freq, radius, timespent, loc_name, opacity))
-			if loc_name not in table_data:
-				table_data[loc_name] = [0,0,[]]
-			table_data[loc_name][0] += timespent
-			table_data[loc_name][1] += freq 
-			table_data[loc_name][2].append(key)
+		lat,lon = key 
+		freq, timespent = val[0], val[1]
+		time2 = convert_appropriate_time(timespent)
+		timespent = round((timespent/3600),1)
+		radius = time_to_radius(timespent)
+		opacity = freq/max_frequency
+		count_traj_list.append((float(lat), float(lon), freq, radius, time2, 'Dhaka', opacity))
+
+	
+	json_count_traj = json.dumps(count_traj_list)
+	
 
 	table_data_dump = []
-	for key, val in table_data.items():
-		temp_num = len(set(val[2]))
-		table_data_dump.append((key, val[0], val[1], temp_num))
-
-
+	for key, val in groupwise_dict.items():
+		#timespent = round(float(val[1]/3600),1)
+		time2 = convert_appropriate_time(val[1])
+		no_persons = len(set(val[2]))
+		table_data_dump.append(('Dhaka', time2, val[0], no_persons)) #location, time spent, freq, no of persons visited
+	#save file in json for datatable read
 	save_file_mobility(table_data_dump)
-	json_count_traj = json.dumps(count_traj_list)
+
 
 	return max_frequency, midlat, midlon, json_count_traj
 
 
 
 
-def file_upload_ctt(file_name, DBFILE):
+
+
+def file_upload_ctt(file_name, DBFILE, Controls):
 
 	all_inputuids = []
-	#print('FILE NAME', file_name)
+	print('FILE NAME', file_name)
 	with open(file_name,'r') as f:
 		csvreader = csv.reader(f)
 		for row in csvreader:
@@ -322,181 +340,168 @@ def file_upload_ctt(file_name, DBFILE):
 				uid = row  
 				all_inputuids.append(str(uid[0]))
 
-	# file = open(file_name, 'r')
-	# for line in file:
-	# 	temp = line.rsplit()
-	# 	if len(temp) > 0:
-	# 		all_inputuids.append(temp[0])
-	# file.close()
-
-	num_uids = len(all_inputuids) 
-	input_uids = ""
-	for i in range(len(all_inputuids)-1):
-		input_uids = input_uids + all_inputuids[i] + ","
-	input_uids += all_inputuids[-1]
-	#print('ALL INPUT UIDS ARE', all_inputuids)
-	num_uids = str(num_uids)
-
-	# get contacted uids
-	p = Popen(['java','-jar', 'media/Contact_Tracing_v1.1.jar', 'media/sample_7MB_7.txt', num_uids, input_uids, '400', '30'], stdout=PIPE, stderr=STDOUT)
-	templst = []
-	for line in p.stdout:
-		temp = line.decode('utf-8')
-		templst.append(temp)
 	
-	num_infected = int(templst[0].split(' ')[2])
-	contacted_uids = []
-	for index in range(1,len(templst),1):
-		temp = templst[index].split(' ')[0]
-		contacted_uids.append(temp)
+	arg_sp = str(Controls['range1'])
+	temp1 = int(Controls['range2'])*60 + int(Controls['range3'])
+	arg_tp = str(temp1)
+	arg_el = str(Controls['EL'])
+	if Controls['RM'] == 'EET':
+		arg_rm = str(1)
+	elif Controls['RM'] == 'NOE':
+		arg_rm = str(2)
+	
+	#make tempurl here (later)
+	#tempurl = 'sp=2&tp=15&el=3&rm=2&tid=AAH03JAC8AAAbXwADw,AAH03JAC6AAAczuAC0'
+	tempurl = "sp=" + arg_sp + "&tp=" + arg_tp + "&el=" + arg_el + "&rm=" + arg_rm + "&tid=" 
+	for i in range(len(all_inputuids)-1):
+		tempurl += all_inputuids[i] + ","
+	tempurl += all_inputuids[-1]
 
-	for val in all_inputuids:
-		if val in contacted_uids:
-			contacted_uids.remove(val)
 
-	#print(contacted_uids)
+	#address = "http://127.0.0.1:10001/ctq?"
+	address = "http://ec2-3-132-194-145.us-east-2.compute.amazonaws.com:10001/ctq?"
+	
+	url = urllib.parse.quote(tempurl)
+	address = address + url
+	temp_dict = {'key':'val'}
+	print('Address is', address)
+	response = requests.post(address, data = temp_dict)
+	print('RESPONSE: ', response) 
 
-	# contacted_uids_dict = {}
-	# for i in contacted_uids:
-	# 	contacted_uids_dict[i] = 0
-	#print('ALL CONTACTED UIDS ARE', contacted_uids)
-	dict = {}
-	latest_date = date(1900,1,1)
-	with open(DBFILE, "r+") as f:
-		csvreader = csv.reader(f)
-		for row in csvreader:
-			uid, date1, time_str, dummy, lat, lon = row
-			if uid not in all_inputuids:
-				continue
-			temp, y, m, d = generate_date(date1)
-			if (latest_date - temp).days < 0:
-				latest_date = latest_date.replace(year=y, month=m, day=d)
-				#print('latest_date' , latest_date)
-			# cnt += 1
-			# print('cnt', cnt)
-	with open(DBFILE, "r+") as f:
-		csvreader = csv.reader(f)
-		for row1 in csvreader:
-			uid, date1, time_str, dummy, lat, lon = row1
-			temp, y, m, d = generate_date(date1)
+	allUids = []
+	allVisitedPoints = {}
+	allExposedPoints = {}
+	allExposureLevel = {}
+	allExposedTime = {}
+	allExposureNo = {}
 
-			if (latest_date-temp).days > 14:
-				continue
 
-			# if uid in contacted_uids:
-			# 	contacted_uids_dict[uid] = 1
+	response_json = response.json()
+	for key,val in response_json.items():
+		allUids.append(key)
+		allVisitedPoints[key] = []
+		allExposedPoints[key] = []
+		for i in range(len(val['allPoints'])):
+			hold = val['allPoints'][i]['valueList']
+			#print(hold[0], ' = ', hold[1]['val0'], ' = ', hold[1]['val1'])
+			allVisitedPoints[key].append((int(hold[0]), float(hold[1]['val0']), float(hold[1]['val1']) ))
 
-			if uid in all_inputuids or uid in contacted_uids:
-				if uid not in dict:
-					dict[uid] = []
-				dict[uid].append((date1, time_str, dummy, lat, lon))
+		for i in range(len(val['exposedPoints'])):
+			hold = val['exposedPoints'][i]['valueList']
+			#print(hold[0], ' = ', hold[1]['val0'], ' = ', hold[1]['val1'])
+			allExposedPoints[key].append((int(hold[0]), float(hold[1]['val0']), float(hold[1]['val1']) ))
 
-	# sort trajectory by time
-	for uid, points in dict.items():
-		points.sort(key=lambda x: (x[0], x[1]))
+		allExposureLevel[key] = int(val['exposureLevel'])
+		allExposedTime[key] = val['exposedTimestamp']
+		allExposureNo[key] = int(val['noOfExposures'])
+
+
+	sorted_uids = []
+	if Controls['RM'] == 'EET':
+		for k, v in allExposedTime.items():
+			date0, time0 = v.split()
+			t1 = int(time.mktime(datetime.strptime(f"{date0} {time0}", "%Y-%m-%d %H:%M:%S").timetuple()))
+			sorted_uids.append((k, t1))
+
+		sorted_uids.sort(key = lambda x: x[1])  
+
+
+	elif Controls['RM'] == 'NOE':
+		for uid in allUids:
+			sorted_uids.append((uid, allExposureLevel[uid], allExposureNo[uid]))
+
+		sorted_uids.sort(key = lambda x: x[1])
+		#bypass the original ids
+		i1 = 0
+		for i1 in range(0, len(sorted_uids), 1):
+			if sorted_uids[i1][1] !=0:
+				break 
+
+		prev = i1
+		prev_EL = sorted_uids[i1][1]
+		i1 += 1
+		for i in range(i1, len(sorted_uids), 1):
+			curr_EL = sorted_uids[i][1]
+			if curr_EL != prev_EL:
+				sorted_uids[prev:i] = sorted(sorted_uids[prev:i], key = lambda x: x[2], reverse=True)
+				prev_EL = curr_EL
+				prev = i
+		sorted_uids[prev:len(sorted_uids)] = sorted(sorted_uids[prev:len(sorted_uids)], key=lambda x: x[2], reverse=True)
+
+	#print('ALL SORTED')
+
+	data_list = []
+	for i in range(len(sorted_uids)):
+		newdict = {}
+		curr_uid = sorted_uids[i][0]
+		if allExposureLevel[curr_uid] != 0:
+			newdict['Serial'] = str(len(data_list))
+			newdict['ID'] = curr_uid
+			newdict['ExposedMoment'] = str(allExposedTime[curr_uid])
+			newdict['ExposedNo'] = str(allExposureNo[curr_uid])
+			data_list.append(newdict)
+	with open('media/contacttracingfile1.json','w') as outfile:
+		json.dump(data_list, outfile)
+
+
+
+
+	for uid, attr in allVisitedPoints.items():
+		attr.sort(key=lambda x: x[0])
 
 
 	#calculating time spent 
-	for uid, points in dict.items(): 
-		for i in range(len(dict[uid]) - 1):
-			date_0 = dict[uid][i][0]
-			date_1 = dict[uid][i+1][0]
+	for uid, points in allVisitedPoints.items(): 
+		for i in range(len(allVisitedPoints[uid]) - 1):
+			
+			ts_0 = int(points[i+1][0]) - int(points[i][0])
 
-			time_0 = dict[uid][i][1]
-			time_1 = dict[uid][i+1][1]
+			allVisitedPoints[uid][i] = allVisitedPoints[uid][i] + (ts_0, ) #time spent added to traj
 
-			#gives a single integer of date+time
-			ts_0 = time.mktime(datetime.strptime(f"{date_0} {time_0}", "%Y%m%d %H:%M:%S").timetuple())
-			ts_1 = time.mktime(datetime.strptime(f"{date_1} {time_1}", "%Y%m%d %H:%M:%S").timetuple())
-
-			dict[uid][i] = dict[uid][i] + (ts_1 - ts_0, ) #time spent added to traj
-
-		dict[uid][-1] = dict[uid][-1] + (time.mktime(datetime.strptime(f"{dict[uid][-1][0]} 23:59:59", "%Y%m%d %H:%M:%S").timetuple())\
-			- time.mktime(datetime.strptime(f"{dict[uid][-1][0]} {dict[uid][-1][1]}", "%Y%m%d %H:%M:%S").timetuple()), )
+		# dict[uid][-1] = dict[uid][-1] + (time.mktime(datetime.strptime(f"{dict[uid][-1][0]} 23:59:59", "%Y%m%d %H:%M:%S").timetuple())\
+		# 	- time.mktime(datetime.strptime(f"{dict[uid][-1][0]} {dict[uid][-1][1]}", "%Y%m%d %H:%M:%S").timetuple()), )
+		temptime = datetime.fromtimestamp(int(allVisitedPoints[uid][-1][0]))
+		date0, time0 = temptime.strftime('%Y-%m-%d %H:%M:%S').split() 
+		ts_last = int(time.mktime(datetime.strptime(f"{date0} 23:59:59", "%Y-%m-%d %H:%M:%S").timetuple())) - int(allVisitedPoints[uid][-1][0])
+		allVisitedPoints[uid][-1] = allVisitedPoints[uid][-1] + (ts_last, )
 
 
-	 
-	#calculate time spent with infected person
-	contacted_time_spent = {}
-	used_sinds = []
-	for key, points in dict.items():
-		if key in all_inputuids:
-			for skey, spoints in dict.items():
-				if skey in contacted_uids:
-					for p_ind in range(len(points)):
-						date1, time_str1, dummy1, lat1, lon1, time_spent1 = points[p_ind]
-						#used_sinds = []
-						for s_ind in range(len(spoints)):
-							if s_ind in used_sinds:
-								continue
-							date2, time_str2, dummy2, lat2, lon2, time_spent2 = spoints[s_ind]
-							dist = (geodesic((lat1,lon1), (lat2,lon2)).km ) * 1000
-							if dist <= 405.0:
-								used_sinds.append(s_ind)
-								elapsed = calculate_time_spent(date1, time_str1, time_spent1, date2, time_str2, time_spent2)
-								#print(elapsed)
-								if skey not in contacted_time_spent:
-									contacted_time_spent[skey] = 0.0
-								contacted_time_spent[skey] += elapsed 
-								contacted_time_spent[skey] = round(contacted_time_spent[skey],2)
-								if contacted_time_spent[skey] > 335.0:
-									contacted_time_spent[skey] = 293.7
-
-
-
-	#forcefully adding contacted ids
-	tempfloatlst = [2.8,6.4,6.4,5.9,7.12,8.45,4.3,9.1,20.3,31.6]
-	for key,val in dict.items():
-		if key not in all_inputuids:
-			if key not in contacted_time_spent:
-				contacted_time_spent[key] = tempfloatlst[randint(0,len(tempfloatlst)-1)]
-
-
-	#save IDs for table showing
-	data_list = []
-	for key,val in contacted_time_spent.items():
-		newdict = {}
-		newdict['ID'] = key
-		if val == 0.0:
-			val = 0.002
-		newdict['TimeSpent'] = val
-		data_list.append(newdict)
-	with open('media/contacttracingfile1.json','w') as outfile:
-		json.dump(data_list, outfile)
 
 
 	# calculating frequency and total time spent
 	max_frequency = 0
 	groupwise_dict = {}
 	alllatlons = []
-	for uid, points in dict.items():
+	for uid, points in allVisitedPoints.items():
 		groupwise_dict[uid] = {}
 		for p in points:
-			date1, time_str, dummy, lat, lon, timespent = p 
-			if [float(lat), float(lon)] not in alllatlons:
-				alllatlons.append([float(lat), float(lon)])
-			if (lat,lon) not in groupwise_dict[uid]:
-				groupwise_dict[uid][(lat,lon)] = [0,0] # freq, total time spent
+			timestamp, lat, lon, timespent = p 
+			lat1 = round(float(lat),6)
+			lon1 = round(float(lon),6)
+			if [lat1, lon1] not in alllatlons:
+				alllatlons.append([lat1, lon1])
+			if (lat1,lon1) not in groupwise_dict[uid]:
+				groupwise_dict[uid][(lat1,lon1)] = [0,0,0] # exposure level, total time spent, freq
 
-			groupwise_dict[uid][(lat,lon)][0] += 1
-			temp1 = groupwise_dict[uid][(lat,lon)][0]
-			groupwise_dict[uid][(lat,lon)][1] += int(timespent)
+			groupwise_dict[uid][(lat1,lon1)][0] = allExposureLevel[uid]
+			groupwise_dict[uid][(lat1,lon1)][2] += 1
+			temp1 = groupwise_dict[uid][(lat1,lon1)][2]
+			groupwise_dict[uid][(lat1,lon1)][1] += int(timespent)
 
 			if temp1 > max_frequency:
 				max_frequency = temp1
 
 	
-	midlat, midlon = find_center(alllatlons)
+	midlat, midlon = find_center(alllatlons) 
 
 	count_traj_list = []
 	for key, val in groupwise_dict.items():
 		for pos, points in val.items():
 			lat,lon = pos 
-			freq, timespent = points[0], points[1]
+			exposureLevel, timespent, freq = points[0], points[1], points[2]
 			timespent = round((timespent/3600),1)
 			radius = time_to_radius(timespent)
-			count_traj_list.append((float(lat), float(lon), freq, radius, timespent, key))
-	
+			count_traj_list.append((float(lat), float(lon), exposureLevel, radius, timespent, key, freq))
 
 	count_traj_list.sort(key=lambda x: x[3], reverse=True)
 	json_count_traj = json.dumps(count_traj_list)
@@ -515,156 +520,184 @@ def file_upload_ctt(file_name, DBFILE):
 
 
 
-def contact_tracing_single(input_uid, DBFILE):
+def contact_tracing_single(input_uid, DBFILE, Controls):
 	dict = {}
 	latest_date = date(1900,1,1)
 
 	# get contacted ids
-	p = Popen(['java','-jar', 'media/Contact_Tracing_v1.1.jar', 'media/sample_7MB_7.txt', '1', input_uid, '400', '30'], stdout=PIPE, stderr=STDOUT)
-	templst = []
-	for line in p.stdout:
-		temp = line.decode('utf-8')
-		templst.append(temp)
+	# p = Popen(['java','-jar', 'media/Contact_Tracing_v2.1.jar', 'media/sample_7MB_7.txt', '1', input_uid, '400', '30'], stdout=PIPE, stderr=STDOUT)
+	#p = Popen(['java','-jar', 'media/Contact_Tracing_v2.1.jar'], stdout=PIPE, stderr=STDOUT) 
+	#print('p is ', p)
 
-	#print('templist', templst)
+	arg_sp = str(Controls['range1'])
+	temp1 = int(Controls['range2'])*60 + int(Controls['range3'])
+	arg_tp = str(temp1)
+	arg_el = str(Controls['EL'])
+	if Controls['RM'] == 'EET':
+		arg_rm = str(1)
+	elif Controls['RM'] == 'NOE':
+		arg_rm = str(2)
 	
-	num_infected = int(templst[0].split(' ')[2])
-	contacted_uids = []
-	for index in range(1,len(templst),1):
-		temp = templst[index].split(' ')[0]
-		contacted_uids.append(temp)
+	#make tempurl here (later)
+	#tempurl = 'sp=1&tp=1&el=1&rm=2&tid=AAH03JABiAAJKjUASt'
+	tempurl = "sp=" + arg_sp + "&tp=" + arg_tp + "&el=" + arg_el + "&rm=" + arg_rm + "&tid=" + input_uid
 
-	#print('CONTACTED', contacted_uids)
-	#return None, None, None, None
+	#address = "http://127.0.0.1:10001/ctq?"
+	address = "http://ec2-3-132-194-145.us-east-2.compute.amazonaws.com:10001/ctq?"
+	
+	url = urllib.parse.quote(tempurl)
+	address = address + url
+	temp_dict = {'key':'val'}
+	print('Address is', address)
+	response = requests.post(address, data = temp_dict)
+	print('RESPONSE: ', response) 
 
-	with open(DBFILE, "r+") as f:
-		csvreader = csv.reader(f)
-		for row in csvreader:
-			uid, date1, time_str, dummy, lat, lon = row
-			if input_uid != uid:
-				continue
-			temp, y, m, d = generate_date(date1)
-			if (latest_date - temp).days < 0:
-				latest_date = latest_date.replace(year=y, month=m, day=d)
-				#print('latest_date' , latest_date)
-			# cnt += 1
-			# print('cnt', cnt)
-	with open(DBFILE, "r+") as f:
-		csvreader = csv.reader(f)
-		for row1 in csvreader:
-			uid, date1, time_str, dummy, lat, lon = row1
-			temp, y, m, d = generate_date(date1)
+	allUids = []
+	allVisitedPoints = {}
+	allExposedPoints = {}
+	allExposureLevel = {}
+	allExposedTime = {}
+	allExposureNo = {}
 
-			if (latest_date-temp).days > 14:
-				continue
+	#print(response.json())
 
-			if uid == input_uid or uid in contacted_uids:
-				if uid not in dict:
-					dict[uid] = []
-				dict[uid].append((date1, time_str, dummy, lat, lon))
- 						
+
+	response_json = response.json()
+	for key,val in response_json.items():
+		allUids.append(key)
+		allVisitedPoints[key] = []
+		allExposedPoints[key] = []
+		for i in range(len(val['allPoints'])):
+			hold = val['allPoints'][i]['valueList']
+			#print(hold[0], ' = ', hold[1]['val0'], ' = ', hold[1]['val1'])
+			allVisitedPoints[key].append((int(hold[0]), float(hold[1]['val0']), float(hold[1]['val1']) ))
+
+		for i in range(len(val['exposedPoints'])):
+			hold = val['exposedPoints'][i]['valueList']
+			#print(hold[0], ' = ', hold[1]['val0'], ' = ', hold[1]['val1'])
+			allExposedPoints[key].append((int(hold[0]), float(hold[1]['val0']), float(hold[1]['val1']) ))
+
+		allExposureLevel[key] = int(val['exposureLevel'])
+		allExposedTime[key] = val['exposedTimestamp']
+		allExposureNo[key] = int(val['noOfExposures'])
+
+	#print('Control is ', Controls['RM'])
+	sorted_uids = []
+	if Controls['RM'] == 'EET':
+		#print('IN EET')
+		for k, v in allExposedTime.items():
+			date0, time0 = v.split()
+			t1 = int(time.mktime(datetime.strptime(f"{date0} {time0}", "%Y-%m-%d %H:%M:%S").timetuple()))
+			sorted_uids.append((k, t1))
+
+		# for item in sorted_uids:
+		# 	print(item)
+		sorted_uids.sort(key = lambda x: x[1])  
+		# print('##########################')
+		# for item in sorted_uids:
+		# 	print(item)
+
+
+	elif Controls['RM'] == 'NOE':
+		#print('IN NOE')
+		for uid in allUids:
+			sorted_uids.append((uid, allExposureLevel[uid], allExposureNo[uid]))
+
+		sorted_uids.sort(key = lambda x: x[1])
+		#bypass the original ids
+		i1 = 0
+		for i1 in range(0, len(sorted_uids), 1):
+			if sorted_uids[i1][1] !=0:
+				break 
+
+		prev = i1
+		prev_EL = sorted_uids[i1][1]
+		i1 += 1
+		for i in range(i1, len(sorted_uids), 1):
+			curr_EL = sorted_uids[i][1]
+			if curr_EL != prev_EL:
+				sorted_uids[prev:i] = sorted(sorted_uids[prev:i], key = lambda x: x[2], reverse=True)
+				prev_EL = curr_EL
+				prev = i
+				#print('val i is ', i)
+		sorted_uids[prev:len(sorted_uids)] = sorted(sorted_uids[prev:len(sorted_uids)], key=lambda x: x[2], reverse=True)
+
+	#print('ALL SORTED')
+
+	data_list = []
+	for i in range(len(sorted_uids)):
+		newdict = {}
+		curr_uid = sorted_uids[i][0]
+		if allExposureLevel[curr_uid] != 0:
+			newdict['Serial'] = str(len(data_list))
+			newdict['ID'] = curr_uid #+ " " + str(allExposureLevel[curr_uid]) + " " + str(allExposureNo[curr_uid])
+			newdict['ExposedMoment'] = str(allExposedTime[curr_uid])
+			newdict['ExposedNo'] = str(allExposureNo[curr_uid])
+			data_list.append(newdict)
+	with open('media/contacttracingnew1.json','w') as outfile:
+		json.dump(data_list, outfile)
+
 
 
 	# sort trajectory by time
-	for uid, points in dict.items():
-		points.sort(key=lambda x: (x[0], x[1]))
+	# for uid, points in dict.items():
+	# 	points.sort(key=lambda x: (x[0], x[1]))
+	for uid, attr in allVisitedPoints.items():
+		attr.sort(key=lambda x: x[0])
 
 
 	#calculating time spent 
-	for uid, points in dict.items(): 
-		for i in range(len(dict[uid]) - 1):
-			date_0 = dict[uid][i][0]
-			date_1 = dict[uid][i+1][0]
+	for uid, points in allVisitedPoints.items(): 
+		for i in range(len(allVisitedPoints[uid]) - 1):
+			
+			ts_0 = int(points[i+1][0]) - int(points[i][0])
 
-			time_0 = dict[uid][i][1]
-			time_1 = dict[uid][i+1][1]
+			allVisitedPoints[uid][i] = allVisitedPoints[uid][i] + (ts_0, ) #time spent added to traj
 
-			#gives a single integer of date+time
-			ts_0 = time.mktime(datetime.strptime(f"{date_0} {time_0}", "%Y%m%d %H:%M:%S").timetuple())
-			ts_1 = time.mktime(datetime.strptime(f"{date_1} {time_1}", "%Y%m%d %H:%M:%S").timetuple())
+		# dict[uid][-1] = dict[uid][-1] + (time.mktime(datetime.strptime(f"{dict[uid][-1][0]} 23:59:59", "%Y%m%d %H:%M:%S").timetuple())\
+		# 	- time.mktime(datetime.strptime(f"{dict[uid][-1][0]} {dict[uid][-1][1]}", "%Y%m%d %H:%M:%S").timetuple()), )
+		temptime = datetime.fromtimestamp(int(allVisitedPoints[uid][-1][0]))
+		date0, time0 = temptime.strftime('%Y-%m-%d %H:%M:%S').split() 
+		ts_last = int(time.mktime(datetime.strptime(f"{date0} 23:59:59", "%Y-%m-%d %H:%M:%S").timetuple())) - int(allVisitedPoints[uid][-1][0])
+		allVisitedPoints[uid][-1] = allVisitedPoints[uid][-1] + (ts_last, )
 
-			dict[uid][i] = dict[uid][i] + (ts_1 - ts_0, ) #time spent added to traj
-
-		dict[uid][-1] = dict[uid][-1] + (time.mktime(datetime.strptime(f"{dict[uid][-1][0]} 23:59:59", "%Y%m%d %H:%M:%S").timetuple())\
-			- time.mktime(datetime.strptime(f"{dict[uid][-1][0]} {dict[uid][-1][1]}", "%Y%m%d %H:%M:%S").timetuple()), )
-
-	
-	#calculate time spent with infected person	 
-	input_traj = dict[input_uid]
-	contacted_time_spent = {}
-	for key, points in dict.items():
-		if key != input_uid:
-			for p_ind in range(len(input_traj)):
-				
-				date1, time_str1, dummy1, lat1, lon1, time_spent1 = input_traj[p_ind]
-				used_sinds = []
-				for s_ind in range(len(points)):
-					if s_ind in used_sinds:
-						continue
-					date2, time_str2, dummy2, lat2, lon2, time_spent2 = points[s_ind]
-					dist = (geodesic((lat1,lon1), (lat2,lon2)).km ) * 1000
-					if dist <= 405.0:
-						used_sinds.append(s_ind)
-						elapsed = calculate_time_spent(date1, time_str1, time_spent1, date2, time_str2, time_spent2)
-						#print(elapsed)
-						if key not in contacted_time_spent:
-							contacted_time_spent[key] = 0.0
-						contacted_time_spent[key] += elapsed 
-						contacted_time_spent[key] = round(contacted_time_spent[key],1)
-						if contacted_time_spent[key] > 335.0:
-							contacted_time_spent[key] = 280.2
-
-
-	#forcefully adding contacted ids
-	for key,val in dict.items():
-		if key != input_uid:
-			if key not in contacted_time_spent:
-				contacted_time_spent[key] = 1.5
-
-	#save IDs for table showing
-	data_list = []
-	for key,val in contacted_time_spent.items():
-		newdict = {}
-		newdict['ID'] = key
-		if val == 0.0:
-			val = 0.002
-		newdict['TimeSpent'] = val 
-		data_list.append(newdict)
-	with open('media/contacttracingnew1.json','w') as outfile:
-		json.dump(data_list, outfile)
 	
 
 	# calculating frequency and total time spent
 	max_frequency = 0
 	groupwise_dict = {}
 	alllatlons = []
-	for uid, points in dict.items():
+	for uid, points in allVisitedPoints.items():
 		groupwise_dict[uid] = {}
 		for p in points:
-			date1, time_str, dummy, lat, lon, timespent = p 
-			if [float(lat), float(lon)] not in alllatlons:
-				alllatlons.append([float(lat), float(lon)])
-			if (lat,lon) not in groupwise_dict[uid]:
-				groupwise_dict[uid][(lat,lon)] = [0,0] # freq, total time spent
+			timestamp, lat, lon, timespent = p 
+			lat1 = round(float(lat),6)
+			lon1 = round(float(lon),6)
+			if [lat1, lon1] not in alllatlons:
+				alllatlons.append([lat1, lon1])
+			if (lat1,lon1) not in groupwise_dict[uid]:
+				groupwise_dict[uid][(lat1,lon1)] = [0,0,0] # exposure level, total time spent, freq
 
-			groupwise_dict[uid][(lat,lon)][0] += 1
-			temp1 = groupwise_dict[uid][(lat,lon)][0]
-			groupwise_dict[uid][(lat,lon)][1] += int(timespent)
+			groupwise_dict[uid][(lat1,lon1)][0] = allExposureLevel[uid]
+			groupwise_dict[uid][(lat1,lon1)][2] += 1
+			temp1 = groupwise_dict[uid][(lat1,lon1)][2]
+			groupwise_dict[uid][(lat1,lon1)][1] += int(timespent)
 
 			if temp1 > max_frequency:
 				max_frequency = temp1
 
 	
-	midlat, midlon = find_center(alllatlons)
+	midlat, midlon = find_center(alllatlons) 
 
 	count_traj_list = []
 	for key, val in groupwise_dict.items():
 		for pos, points in val.items():
 			lat,lon = pos 
-			freq, timespent = points[0], points[1]
+			exposureLevel, timespent, freq = points[0], points[1], points[2]
 			timespent = round((timespent/3600),1)
 			radius = time_to_radius(timespent)
-			count_traj_list.append((float(lat), float(lon), freq, radius, timespent, key))
+			count_traj_list.append((float(lat), float(lon), exposureLevel, radius, timespent, key, freq))
+			#print(key, '->', (exposureLevel/max_frequency))
 
 	count_traj_list.sort(key=lambda x: x[3], reverse=True)
 	
@@ -711,7 +744,7 @@ def MapView(request):
 		Controls['range3'] = request.POST.get('range3')
 		Controls['EL'] = request.POST.get('EL')
 		Controls['RM'] = request.POST.get('RM')
-	print('Controls are:::::::', Controls)
+	#print('Controls are:::::::', Controls)
 	
 
 	if request.method == 'POST' and 'document' in request.FILES: ######### file has been uploaded to server
@@ -730,7 +763,7 @@ def MapView(request):
 			file_name = path
 
 			try:
-				max_frequency, midlat, midlon, json_count_traj = file_upload_covid(file_name, DBFILE)
+				max_frequency, midlat, midlon, json_count_traj = file_upload_covid(file_name, DBFILE, Controls)
 			except Exception:
 				print("inside file exception")
 				os.remove(file_name)
@@ -757,10 +790,11 @@ def MapView(request):
 			file_name = path
 
 			try:
-				max_frequency, midlat, midlon, json_count_traj, json_input_uids = file_upload_ctt(file_name, DBFILE)
+				max_frequency, midlat, midlon, json_count_traj, json_input_uids = file_upload_ctt(file_name, DBFILE, Controls)
 			except Exception:
 				print('inside file ct exception')
 				os.remove(file_name)
+
 				return render(request=request, template_name=template_name, context={'file_name':None, 
 		'data_present':False, 'map_mode':"", 'inputinfo':inputinfo, 'valid_input':valid_input, 'Controls':Controls})
 
@@ -785,7 +819,7 @@ def MapView(request):
 		actiontype = request.POST.get('action')
 		geo = GeoNames(username='sifat578')
 		DBFILE = "media/sample_7MB_7.csv"
-		print('reqpost:', request.POST, '-----------------', request);
+		#print('reqpost:', request.POST, '-----------------', request);
 
 		if mobileno.isnumeric() == False:
 			input_uid = mobileno
@@ -796,154 +830,167 @@ def MapView(request):
 				all_uids.append((line.split(',')[1]).rstrip())
 			file.close()
 
-		else:
-			all_mappings = []
-			all_uids = []
-			file = open('media/MobileNoMap.txt','r')
-			for line in file:
-				all_mappings.append(line)
-				all_uids.append((line.split(',')[1]).rstrip())
-			file.close()
+		# else:
+		# 	all_mappings = []
+		# 	all_uids = []
+		# 	file = open('media/MobileNoMap.txt','r')
+		# 	for line in file:
+		# 		all_mappings.append(line)
+		# 		all_uids.append((line.split(',')[1]).rstrip())
+		# 	file.close()
 
-			# just for the sake of testing right now
-			#mobileno = map_dummy_to_mobile(mobileno)
-			input_uid = ""
-			for line in all_mappings:
-				tempmob = line.split(',')[0]
-				tempuid = (line.split(',')[1]).rstrip()
-				if tempmob == mobileno:
-					input_uid = tempuid
-					break
-					#print('UID is ', tempuid)
-			if input_uid != "":
-				inputinfo = input_uid
-			else:
-				inputinfo = mobileno 
+		# 	# just for the sake of testing right now
+		# 	#mobileno = map_dummy_to_mobile(mobileno)
+		# 	input_uid = ""
+		# 	for line in all_mappings:
+		# 		tempmob = line.split(',')[0]
+		# 		tempuid = (line.split(',')[1]).rstrip()
+		# 		if tempmob == mobileno:
+		# 			input_uid = tempuid
+		# 			break
+		# 			#print('UID is ', tempuid)
+		# 	if input_uid != "":
+		# 		inputinfo = input_uid
+		# 	else:
+		# 		inputinfo = mobileno 
 
 		
-		if len(mobileno)==0 or input_uid not in all_uids:
+		if len(mobileno)<15:
 			valid_input = False
 			return render(request=request, template_name=template_name, context={'file_name':None, 
-		'data_present':False, 'map_mode':"", 'inputinfo':inputinfo, 'valid_input':valid_input, 'Controls':Controls})
+		'data_present':False, 'map_mode':"", 'inputinfo':mobileno, 'valid_input':valid_input, 'Controls':Controls})
 
-
+		input_uid = mobileno
+		inputinfo = mobileno
+		valid_input = True 
 		print('INPUTUID', input_uid)
 		if actiontype == "Mobility Trace":
-			dict = {}
-			data_present = True
-			map_mode = "covid19trace"
-			latest_date = date(1900,1,1)
-			with open(DBFILE, "r+") as f:
-				csvreader = csv.reader(f)
-				for row in csvreader:
-					uid, date1, time_str, dummy, lat, lon = row
-					if input_uid != uid:
-						continue
-					temp, y, m, d = generate_date(date1)
-					if (latest_date - temp).days < 0:
-						latest_date = latest_date.replace(year=y, month=m, day=d)
-						#print('latest_date' , latest_date)
-					
-			with open(DBFILE, "r+") as f:
-				csvreader = csv.reader(f)
-				#limit=100
-				for row1 in csvreader:
-					uid, date1, time_str, dummy, lat, lon = row1
-					temp, y, m, d = generate_date(date1)
-
-					if (latest_date-temp).days > 14:
-						continue
-
-					if input_uid == uid:
-						if uid not in dict:
-							dict[uid] = []
-						dict[uid].append((date1, time_str, dummy, lat, lon))
-
-			#sort according to time
-			for uid, points in dict.items():
-				points.sort(key=lambda x: (x[0], x[1]))
-
-			traj = dict[input_uid]
-			for i in range(len(traj) - 1):
-				date_0 = traj[i][0]
-				date_1 = traj[i+1][0]
-
-				time_0 = traj[i][1]
-				time_1 = traj[i+1][1]
-
-				#gives a single integer of date+time
-				ts_0 = time.mktime(datetime.strptime(f"{date_0} {time_0}", "%Y%m%d %H:%M:%S").timetuple())
-				ts_1 = time.mktime(datetime.strptime(f"{date_1} {time_1}", "%Y%m%d %H:%M:%S").timetuple())
-
-				traj[i] = traj[i] + (ts_1 - ts_0, ) #time spent added to traj
-
-			traj[-1] = traj[-1] + (time.mktime(datetime.strptime(f"{traj[-1][0]} 23:59:59", "%Y%m%d %H:%M:%S").timetuple())\
-				- time.mktime(datetime.strptime(f"{traj[-1][0]} {traj[-1][1]}", "%Y%m%d %H:%M:%S").timetuple()), )
+			arg_sp = str(Controls['range1'])
+			temp1 = int(Controls['range2'])*60 + int(Controls['range3'])
+			arg_tp = str(temp1)
+			#arg_el = str(Controls['EL'])
+			arg_el = "0"
+			if Controls['RM'] == 'EET':
+				arg_rm = str(1)
+			elif Controls['RM'] == 'NOE':
+				arg_rm = str(2)
+			
+			#make tempurl here (later)
+			tempurl = "sp=" + arg_sp + "&tp=" + arg_tp + "&el=" + arg_el + "&rm=" + arg_rm + "&tid=" + input_uid
+			# for i in range(len(all_inputuids)-1):
+			# 	tempurl += all_inputuids[i] + ","
+			# tempurl += all_inputuids[-1]
 
 
-			#calculate frequency traj(date, time_str, dummy, lat, lon, time spent)
-			#alllatlons = [[float(i[3]),float(i[4])] for i in traj]
-			temp1 = [[(i[3],i[4])] for i in traj]
-			count_traj = Counter(chain(*temp1))
+			#address = "http://127.0.0.1:10001/ctq?"
+			address = "http://ec2-3-132-194-145.us-east-2.compute.amazonaws.com:10001/ctq?"
+			#tempurl = 'sp=2&tp=15&el=3&rm=2&tid=AAH03JAC6AAAczuAC0'
+			url = urllib.parse.quote(tempurl)
+			address = address + url
+			temp_dict = {'key':'val'}
+			print('Address is', address)
+			response = requests.post(address, data = temp_dict)
+			print('RESPONSE: ', response) 
+
+			#print(response.json())
+
+			allUids = []
+			allVisitedPoints = {}
+			allExposedPoints = {}
+			allExposureLevel = {}
+			allExposedTime = {}
+			allExposureNo = {}
+
+
+			response_json = response.json()
+			for key,val in response_json.items():
+				allUids.append(key)
+				allVisitedPoints[key] = []
+				allExposedPoints[key] = []
+				for i in range(len(val['allPoints'])):
+					hold = val['allPoints'][i]['valueList']
+					#print(hold[0], ' = ', hold[1]['val0'], ' = ', hold[1]['val1'])
+					allVisitedPoints[key].append((int(hold[0]), float(hold[1]['val0']), float(hold[1]['val1']) ))
+
+				for i in range(len(val['exposedPoints'])):
+					hold = val['exposedPoints'][i]['valueList']
+					#print(hold[0], ' = ', hold[1]['val0'], ' = ', hold[1]['val1'])
+					allExposedPoints[key].append((int(hold[0]), float(hold[1]['val0']), float(hold[1]['val1']) ))
+
+				allExposureLevel[key] = int(val['exposureLevel'])
+				allExposedTime[key] = val['exposedTimestamp']
+				allExposureNo[key] = int(val['noOfExposures'])
+
+			print('number of uids', len(allUids))
+			#calculate time spent
+			for uid, attr in allVisitedPoints.items():
+				attr.sort(key=lambda x: x[0])
+
+
+			#calculating time spent 
+			for uid, points in allVisitedPoints.items(): 
+				if allExposureLevel[uid] == 0:
+					for i in range(len(allVisitedPoints[uid]) - 1):
+						ts_0 = int(points[i+1][0]) - int(points[i][0])
+						allVisitedPoints[uid][i] = allVisitedPoints[uid][i] + (ts_0, ) #time spent added to traj
+
+					# dict[uid][-1] = dict[uid][-1] + (time.mktime(datetime.strptime(f"{dict[uid][-1][0]} 23:59:59", "%Y%m%d %H:%M:%S").timetuple())\
+					# 	- time.mktime(datetime.strptime(f"{dict[uid][-1][0]} {dict[uid][-1][1]}", "%Y%m%d %H:%M:%S").timetuple()), )
+					temptime = datetime.fromtimestamp(int(allVisitedPoints[uid][-1][0]))
+					date0, time0 = temptime.strftime('%Y-%m-%d %H:%M:%S').split() 
+					ts_last = int(time.mktime(datetime.strptime(f"{date0} 23:59:59", "%Y-%m-%d %H:%M:%S").timetuple())) - int(allVisitedPoints[uid][-1][0])
+					allVisitedPoints[uid][-1] = allVisitedPoints[uid][-1] + (ts_last, )
+
+
+			max_frequency = 0
+			groupwise_dict = {}
+			alllatlons = []
+			for uid, points in allVisitedPoints.items():
+				if allExposureLevel[uid] == 0:
+					#groupwise_dict[uid] = {}
+					for p in points:
+						timestamp, lat, lon, timespent = p 
+						lat1 = round(float(lat), 6)
+						lon1 = round(float(lon), 6)
+						if [lat1, lon1] not in alllatlons:
+							alllatlons.append([lat1, lon1])
+						if (lat1,lon1) not in groupwise_dict:
+							groupwise_dict[(lat1,lon1)] = [0,0] # freq, total time spent
+
+						groupwise_dict[(lat1,lon1)][0] += 1
+						temp1 = groupwise_dict[(lat1,lon1)][0]
+						groupwise_dict[(lat1,lon1)][1] += int(timespent)
+
+						if temp1 > max_frequency:
+							max_frequency = temp1
+
+			
+			midlat, midlon = find_center(alllatlons) 
+
 			count_traj_list = []
-			for key, val in count_traj:
-				if [float(key),float(val)] not in alllatlons:
-					alllatlons.append([float(key),float(val)])
-			  
-				count_traj_list.append((float(key), float(val), count_traj[key,val]))
-				if count_traj[key,val] > max_frequency:
-					max_frequency = count_traj[key,val]
+			for key, val in groupwise_dict.items():
+				lat,lon = key
+				#print('KEY IS', key) 
+				freq, timespent = val[0], val[1]
+				time2 = convert_appropriate_time(timespent)
+				timespent = round((timespent/3600),1)
+				radius = time_to_radius(timespent)
+				opacity = freq/max_frequency
+				count_traj_list.append((float(lat), float(lon), freq, radius, time2, 'Dhaka', opacity))
 
-			#find total times spent in separate locations
-			for tup in traj:
-				if (tup[3],tup[4]) not in collective_time:
-					collective_time[(tup[3],tup[4])] = 0
-				collective_time[(tup[3],tup[4])] += tup[5]
-
-
-			#read all reverse geocodes
-			all_geocodes = {}
-			file = open('media/reverse_geocodes_7MB_6.txt','r')
-			for line in file:
-				temp = line.split(',')
-				all_geocodes[(temp[0], temp[1])] = temp[2].rstrip()
-
-			file.close()
-
-
-			cnt = 0
-			table_data = {}
-			for key, val in count_traj:
-				temp2 = collective_time[(key, val)]/3600 #stores time in hours
-				temp2 = round(temp2,1)
-				temp3 = time_to_radius(temp2)
-				temp4 = str(temp2)
-				# collective_time_list.append((float(key), float(val), temp3)) #lat, lon, radius
-				count_traj_list[cnt] = count_traj_list[cnt] + (temp3, temp4) #lat,lon,freq,rad,total time spent
-				#get location names 
-				if (key,val) in all_geocodes:
-					loc_name = all_geocodes[(key,val)]
-				else:
-					loc_name = str(geo.reverse(query=(key, val), exactly_one=False,timeout=5)[0])
-					loc_name = loc_name.split(",")[0]
-				
-				opacity = get_opacity(count_traj_list[cnt][2])
-				count_traj_list[cnt] = count_traj_list[cnt] + (loc_name, opacity) #lat,lon,freq,rad,total time spent,locname, opacity
-				if loc_name not in table_data:
-					table_data[loc_name] = [0,0]
-				table_data[loc_name][0] += temp2
-				table_data[loc_name][1] += float(count_traj_list[cnt][2])
-				cnt += 1
-				
-
+			
 			json_count_traj = json.dumps(count_traj_list)
-			midlat, midlon = find_center(alllatlons)
+			data_present = True 
+			map_mode = "covid19trace"
 
 			table_data_dump = []
-			for key,val in table_data.items():
-				table_data_dump.append((key,val[0],val[1])) #location, time spent, freq
+			for key, val in groupwise_dict.items():
+				#timespent = round(float(val[1]/3600),1)
+				time2 = convert_appropriate_time(val[1])
+				table_data_dump.append(('Dhaka', time2, val[0])) #location, time spent, freq
 			#save file in json for datatable read
 			save_json_mobility(table_data_dump)
+
 
 			context = {'inputinfo':inputinfo, 'data_present':data_present, 'count_traj':json_count_traj,\
 			 'max_frequency': max_frequency, 'map_mode':map_mode, 'midlat':midlat, 'midlon':midlon,\
@@ -955,10 +1002,136 @@ def MapView(request):
 
 
 
+			# dict = {}
+			# data_present = True
+			# map_mode = "covid19trace"
+			# latest_date = date(1900,1,1)
+			# with open(DBFILE, "r+") as f:
+			# 	csvreader = csv.reader(f)
+			# 	for row in csvreader:
+			# 		uid, date1, time_str, dummy, lat, lon = row
+			# 		if input_uid != uid:
+			# 			continue
+			# 		temp, y, m, d = generate_date(date1)
+			# 		if (latest_date - temp).days < 0:
+			# 			latest_date = latest_date.replace(year=y, month=m, day=d)
+			# 			#print('latest_date' , latest_date)
+					
+			# with open(DBFILE, "r+") as f:
+			# 	csvreader = csv.reader(f)
+			# 	#limit=100
+			# 	for row1 in csvreader:
+			# 		uid, date1, time_str, dummy, lat, lon = row1
+			# 		temp, y, m, d = generate_date(date1)
+
+			# 		if (latest_date-temp).days > 14:
+			# 			continue
+
+			# 		if input_uid == uid:
+			# 			if uid not in dict:
+			# 				dict[uid] = []
+			# 			dict[uid].append((date1, time_str, dummy, lat, lon))
+
+			# #sort according to time
+			# for uid, points in dict.items():
+			# 	points.sort(key=lambda x: (x[0], x[1]))
+
+			# traj = dict[input_uid]
+			# for i in range(len(traj) - 1):
+			# 	date_0 = traj[i][0]
+			# 	date_1 = traj[i+1][0]
+
+			# 	time_0 = traj[i][1]
+			# 	time_1 = traj[i+1][1]
+
+			# 	#gives a single integer of date+time
+			# 	ts_0 = time.mktime(datetime.strptime(f"{date_0} {time_0}", "%Y%m%d %H:%M:%S").timetuple())
+			# 	ts_1 = time.mktime(datetime.strptime(f"{date_1} {time_1}", "%Y%m%d %H:%M:%S").timetuple())
+
+			# 	traj[i] = traj[i] + (ts_1 - ts_0, ) #time spent added to traj
+
+			# traj[-1] = traj[-1] + (time.mktime(datetime.strptime(f"{traj[-1][0]} 23:59:59", "%Y%m%d %H:%M:%S").timetuple())\
+			# 	- time.mktime(datetime.strptime(f"{traj[-1][0]} {traj[-1][1]}", "%Y%m%d %H:%M:%S").timetuple()), )
+
+
+			# #calculate frequency traj(date, time_str, dummy, lat, lon, time spent)
+			# #alllatlons = [[float(i[3]),float(i[4])] for i in traj]
+			# temp1 = [[(i[3],i[4])] for i in traj]
+			# count_traj = Counter(chain(*temp1))
+			# count_traj_list = []
+			# for key, val in count_traj:
+			# 	if [float(key),float(val)] not in alllatlons:
+			# 		alllatlons.append([float(key),float(val)])
+			  
+			# 	count_traj_list.append((float(key), float(val), count_traj[key,val]))
+			# 	if count_traj[key,val] > max_frequency:
+			# 		max_frequency = count_traj[key,val]
+
+			# #find total times spent in separate locations
+			# for tup in traj:
+			# 	if (tup[3],tup[4]) not in collective_time:
+			# 		collective_time[(tup[3],tup[4])] = 0
+			# 	collective_time[(tup[3],tup[4])] += tup[5]
+
+
+			# #read all reverse geocodes
+			# all_geocodes = {}
+			# file = open('media/reverse_geocodes_7MB_6.txt','r')
+			# for line in file:
+			# 	temp = line.split(',')
+			# 	all_geocodes[(temp[0], temp[1])] = temp[2].rstrip()
+
+			# file.close()
+
+
+			# cnt = 0
+			# table_data = {}
+			# for key, val in count_traj:
+			# 	temp2 = collective_time[(key, val)]/3600 #stores time in hours
+			# 	temp2 = round(temp2,1)
+			# 	temp3 = time_to_radius(temp2)
+			# 	temp4 = str(temp2)
+			# 	# collective_time_list.append((float(key), float(val), temp3)) #lat, lon, radius
+			# 	count_traj_list[cnt] = count_traj_list[cnt] + (temp3, temp4) #lat,lon,freq,rad,total time spent
+			# 	#get location names 
+			# 	if (key,val) in all_geocodes:
+			# 		loc_name = all_geocodes[(key,val)]
+			# 	else:
+			# 		loc_name = str(geo.reverse(query=(key, val), exactly_one=False,timeout=5)[0])
+			# 		loc_name = loc_name.split(",")[0]
+				
+			# 	opacity = get_opacity(count_traj_list[cnt][2])
+			# 	count_traj_list[cnt] = count_traj_list[cnt] + (loc_name, opacity) #lat,lon,freq,rad,total time spent,locname, opacity
+			# 	if loc_name not in table_data:
+			# 		table_data[loc_name] = [0,0]
+			# 	table_data[loc_name][0] += temp2
+			# 	table_data[loc_name][1] += float(count_traj_list[cnt][2])
+			# 	cnt += 1
+				
+
+			# json_count_traj = json.dumps(count_traj_list)
+			# midlat, midlon = find_center(alllatlons)
+
+			# table_data_dump = []
+			# for key,val in table_data.items():
+			# 	table_data_dump.append((key,val[0],val[1])) #location, time spent, freq
+			# #save file in json for datatable read
+			# save_json_mobility(table_data_dump)
+
+			# context = {'inputinfo':inputinfo, 'data_present':data_present, 'count_traj':json_count_traj,\
+			#  'max_frequency': max_frequency, 'map_mode':map_mode, 'midlat':midlat, 'midlon':midlon,\
+			#  'file_name':file_name, 'valid_input':valid_input, 'Controls':Controls}
+
+			# return render(request=request, template_name=template_name, context=context)
+
+
+
+
+
 		elif actiontype == "Contact Tracing":
 			map_mode = "contact tracing"
 			data_present = True
-			max_frequency, midlat, midlon, json_count_traj = contact_tracing_single(input_uid, DBFILE)
+			max_frequency, midlat, midlon, json_count_traj = contact_tracing_single(input_uid, DBFILE, Controls)
 
 			context = {'inputinfo':inputinfo, 'data_present':data_present, 'count_traj':json_count_traj,\
 			 'max_frequency': max_frequency, 'map_mode':map_mode, 'midlat':midlat, 'midlon':midlon,\

@@ -1,0 +1,5 @@
+Read http server configuration from this file ignoring the first line, which is for explaning the content. The following lines contain ip address, port, backlog and threadpool size respectively.
+localhost
+10001
+0
+10

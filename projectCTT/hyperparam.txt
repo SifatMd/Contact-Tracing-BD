@@ -1,0 +1,9 @@
+Read hyper parameters from this file ignoring the first line, which is for explaning the content. The following lines contain qnode capacity, time bucket in minutes, max trajectories in rtree blocks, location of database (i.e. localhost or host name), name of the table containing normalized trajectories in database, fetchsize, limit based on number of rows (-1 indicates no limit), number of trajectories processed before each commit respectively.
+128
+30
+4
+ec2-3-132-194-145.us-east-2.compute.amazonaws.com
+normalized_trajectory_day_one
+10000
+20
+500
