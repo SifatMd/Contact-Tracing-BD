@@ -22,44 +22,20 @@ function singleid_ctrace(selected_uid, max_frequency, input_uid) {
   for (index=0; index < count_traj.length; index++){
   	lat = count_traj[index][0];
   	long = count_traj[index][1];
-  	exp_level = count_traj[index][2];
+  	freq = count_traj[index][2];
   	rad = count_traj[index][3];
     timespent = count_traj[index][4];
   	uid = count_traj[index][5];
-    freq = count_traj[index][6];
-
   	rel_opacity = freq/max_freq;
   	if (rel_opacity < 0.1){ rel_opacity = 0.1}
   	else if (rel_opacity > 0.88) {rel_opacity = 0.88};
-
-    if (exp_level == 3){
-      // value_fillopacity = '#3ea383';
-      // circle_color = '#1c9e75';
-      value_fillopacity = '#35a4cc';
-      circle_color = "#35a4cc";
-      rad_factor = 1;
-    }
-    else if (exp_level == 2){
-      // value_fillopacity = "#185f99";
-      // circle_color = "#1208cc";
-      value_fillopacity = '#e69007';
-      circle_color = "#ff9d00";
-      rad_factor = 1.15;
-    }
-    else if (exp_level == 1){
-      // value_fillopacity = '#6c259c';
-      // circle_color = "#4f0f94";
-      value_fillopacity = '#6c259c';
-      circle_color = "#4f0f94";
-      rad_factor = 1.3;
-    }
 
   	if (uid == input_uid){  
       	var circleref = L.circle([lat, long], {
       		color: 'red',
       		fillColor: "#e83535",
       		fillOpacity: rel_opacity,
-      		radius: rad*1.4
+      		radius: rad*1.1
       	}).addTo(group1);
       	var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString() + "hrs";
       	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strinfo);
@@ -72,20 +48,11 @@ function singleid_ctrace(selected_uid, max_frequency, input_uid) {
       	})
   	}
   	else if (uid == selected_uid){
-      if (exp_level == 1){
-        rad_factor = 1.3;
-      }
-      else if(exp_level == 2){
-        rad_factor = 1.15;
-      }
-      else if(exp_level == 3){
-        rad_factor = 1;
-      }
   		var circleref = L.circle([lat, long], {
-      		color: '#2db500',
-      		fillColor: "#279e00",
+      		color: '#e86f05',
+      		fillColor: "#e86f05",
       		fillOpacity: rel_opacity,
-      		radius: rad*rad_factor
+      		radius: rad
       	}).addTo(group1);
       	var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString() + "hrs";
       	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strinfo);
@@ -99,10 +66,10 @@ function singleid_ctrace(selected_uid, max_frequency, input_uid) {
   	}
   	else {
   		var circleref = L.circle([lat, long], {
-      		color: circle_color,
-      		fillColor: value_fillopacity,
+      		color: 'blue',
+      		fillColor: "#34a0ed",
       		fillOpacity: rel_opacity,
-      		radius: rad*rad_factor
+      		radius: rad
       	}).addTo(group1);
       	var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString() + "hrs";
       	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strinfo);

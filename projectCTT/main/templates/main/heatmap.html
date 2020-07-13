@@ -67,11 +67,7 @@
 
 
   	<script>
-  	  var map = L.map('map', {
-        zoomControl: false
-      }).setView(["{{midlat}}", "{{midlon}}"], 12);
-
-
+  	  var map = L.map('map').setView(["{{midlat}}", "{{midlon}}"], 12);
       //var map = L.map('map').setView([23.9501, 90.2733], 12);
 	      //23.699200, 90.449997   |   42.35, -71.08   |   23.9501, 90.2733
 	    // load a tile layer
@@ -81,14 +77,8 @@
         minZoom:5,
         subdomains:['mt0','mt1','mt2','mt3']
       }).addTo(map);
-      
-      L.control.zoom({
-        position: 'topright'
-      }).addTo(map);
       //add scale to map
-      L.control.scale({
-        position: 'bottomright'
-      }).addTo(map);
+      L.control.scale().addTo(map);
 
 
       // var heatmap_data = JSON.parse("{{ heatmap_data | escapejs }}");
