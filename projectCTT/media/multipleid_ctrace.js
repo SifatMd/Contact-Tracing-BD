@@ -22,14 +22,31 @@ function multipleid_ctrace(selected_uid, max_frequency, input_uid) {
   for (index=0; index < count_traj.length; index++){
   	lat = count_traj[index][0];
     long = count_traj[index][1];
-    freq = count_traj[index][2];
+    exp_level = count_traj[index][2];
     rad = count_traj[index][3];
     timespent = count_traj[index][4];
     uid = count_traj[index][5];
+    freq = count_traj[index][6];
+
     puid = false;
     rel_opacity = freq/max_freq;
     if (rel_opacity < 0.1){ rel_opacity = 0.1}
     else if (rel_opacity > 0.88) {rel_opacity = 0.88};
+
+    // if (exp_level == 1){
+    //   value_fillopacity = '#3ea383';
+    //   circle_color = '#1c9e75';
+    // }
+    // else if (exp_level == 2){
+    //   value_fillopacity = "#185f99";
+    //   circle_color = "#1208cc";
+    // }
+    // else if (exp_level==3){
+    //   value_fillopacity = '#6c259c';
+    //   circle_color = "#4f0f94";
+    // }
+    value_fillopacity = '#4aa4e8';
+    circle_color = '#3e6ff7';
 
     for (i1=0; i1 < input_uids.length; i1 ++) {
       if (uid == input_uids[i1]) {
@@ -43,9 +60,9 @@ function multipleid_ctrace(selected_uid, max_frequency, input_uid) {
         color: 'red',
         fillColor: "#e83535",
         fillOpacity: rel_opacity,
-        radius: rad*1.1
+        radius: rad*1.05
       }).addTo(group1);
-      var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString() + "hrs";
+      var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString();
       var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strinfo);
       circleref.bindPopup(circlepopup);
       circleref.on('mouseover', function(evt){
@@ -57,12 +74,12 @@ function multipleid_ctrace(selected_uid, max_frequency, input_uid) {
     }
     else if (uid == selected_uid){
       var circleref = L.circle([lat, long], {
-        color: '#e86f05',
-        fillColor: "#e86f05",
+        color: '#ed7513',
+        fillColor: "#f58d38",
         fillOpacity: rel_opacity,
         radius: rad
       }).addTo(group1);
-      var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString() + "hrs";
+      var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString();
       var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strinfo);
       circleref.bindPopup(circlepopup);
       circleref.on('mouseover', function(evt){
@@ -74,12 +91,12 @@ function multipleid_ctrace(selected_uid, max_frequency, input_uid) {
     }
     else {
       var circleref = L.circle([lat, long], {
-        color: 'blue',
-        fillColor: "#34a0ed",
+        color: circle_color,
+        fillColor: value_fillopacity,
         fillOpacity: rel_opacity,
         radius: rad
       }).addTo(group1);
-      var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString() + "hrs";
+      var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString();
       var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strinfo);
       circleref.bindPopup(circlepopup);
       circleref.on('mouseover', function(evt){

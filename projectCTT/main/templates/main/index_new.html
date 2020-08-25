@@ -11,30 +11,45 @@
     
     <script src="https://code.jquery.com/jquery-2.2.4.js" integrity="sha256-iT6Q9iMJYuQiMWNd9lDyBUStIq/8PuOW33aOqmvFpqI=" crossorigin="anonymous"></script>
 
+     
+
     <!-- Add icon library -->
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    
-
-
-    
 
     <script src="media/jquery_input_file_change.js"></script>
+
+    <!-------------------------- Material Designs ------------------------------>
+    <!-- MDB icon -->
+	  <!-- <link rel="icon" href="media/img/mdb-favicon.ico" type="image/x-icon"> -->
+	  <!-- Font Awesome -->
+	  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.11.2/css/all.css">
+	  <!-- Google Fonts Roboto -->
+	  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap">
+	  <!-- Bootstrap core CSS -->
+	  <link rel="stylesheet" href="media/css/bootstrap.min.css">
+	  <!-- Material Design Bootstrap -->
+	  <!-- <link rel="stylesheet" href="media/css/mdb.min.css"> -->
+	  <!-- Your custom styles (optional) -->
+	  <link rel="stylesheet" href="media/css/style.css">
 
     <style type="text/css">
     	html, body {
 	        height: 100%;
+	        display: block;
 	      } 
     	.container { 
-			  width: 100%;
-	          height: 100%;
-	          margin: 0px 0px 0px 0px;
-	          padding: 0px 0px 0px 0px; 
-		  }
-		#map {width: 100%;
-            height: 100%;}
+		  width: 100%;
+          height: 100%;
+          margin: 0px 0px 0px 0px;
+          padding: 0px 0px 0px 0px;
+		}
+		#map {
+			width: 100%;
+            height: 100%;
+        }
 
         .highlight {
-		    background-color: #0cc3c9 ;
+		    background-color: #0cc3c9;
 		    font-weight: bold;
 		    font-size: 98%;
 		    text-shadow: 1px 1px 0px #EEE;
@@ -119,6 +134,138 @@
 		th {
 			font-size: 93%;
 		}
+
+
+		/***************sidebar controls*****************/
+		/* Style the button that is used to open the sidepanel */
+		.openbtn {
+			position: relative;
+		  font-size: 25px;
+		  width: 40px;
+		  cursor: pointer;
+		  background-color: #53bdcf;
+		  color: white;
+		  padding: 0px;
+		  border: none;
+		  z-index: 2;
+		}
+
+		.openbtn:hover {
+			position: relative;
+		  background-color: #42a2b3;
+		  z-index: 2;
+		}
+
+
+		/************************* The sidepanel menu ***************************88*/
+		.sidepanel {
+		  height: 100%; /* Specify a height */
+		  width: 0; /* 0 width - change this with JavaScript */
+		  position: relative; /* Stay in place */
+		  z-index: 999; /* Stay on top */
+		  top: 0;
+		  left: 0;
+		  background-color: #f0f0f0; /* Black*/
+		  overflow-x: hidden; /* Disable horizontal scroll */
+		  padding-top: 15px; /* Place content 60px from the top */
+		  transition: 0.5s; /* 0.5 second transition effect to slide in the sidepanel */
+		}
+
+		/* The sidepanel links */
+		.sidepanel a {
+		  padding: 8px 8px 8px 32px;
+		  text-decoration: none;
+		  font-size: 25px;
+		  color: #818181;
+		  display: block;
+		  transition: 0.3s;
+		}
+
+		/* When you mouse over the navigation links, change their color */
+		.sidepanel a:hover {
+		  color: #f1f1f1;
+		}
+
+		/* Position and style the close button (top right corner) */
+		.sidepanel .closebtn {
+		  position: absolute;
+		  top: 0;
+		  right: 5px;
+		  padding: 0px 5px 0px 0px;
+		  margin-left: 10px;
+		}
+		.sidepanel .closebtn:hover {
+			color: #000000;
+		}
+
+		/******************************for sliders**********************************/
+		input[type=range] {
+		    -webkit-appearance: none;
+		    margin: 20px 0;
+		    width: 100%;
+		}
+		input[type=range]:focus {
+		    outline: none;
+		}
+		input[type=range]::-webkit-slider-runnable-track {
+		    width: 100%;
+		    height: 4px;
+		    cursor: pointer;
+		    animation: 0.2s;
+		    background: #1b76d1;
+		    border-radius: 25px;
+		}
+		input[type=range]::-webkit-slider-thumb {
+		    height: 20px;
+		    width: 20px;
+		    border-radius: 50%;
+		    background: #fff;
+		    box-shadow: 0 0 4px 0 rgba(0,0,0, 1);
+		    cursor: pointer;
+		    -webkit-appearance: none;
+		    margin-top: -8px;
+		}
+		input[type=range]:focus::-webkit-slider-runnable-track {
+		    background: #1b76d1;
+		}
+		.range-wrap{
+		    width: 500px;
+		    position: relative;
+		}
+		.range-value{
+		    position: absolute;
+		    top: -50%;
+		}
+		.range-value span{
+		    width: 30px;
+		    height: 24px;
+		    line-height: 24px;
+		    text-align: center;
+		    background: #1b76d1;
+		    color: #fff;
+		    font-size: 12px;
+		    display: block;
+		    position: absolute;
+		    left: 50%;
+		    transform: translate(-50%, 0);
+		    border-radius: 6px;
+		}
+		.range-value span:before{
+		    content: "";
+		    position: absolute;
+		    width: 0;
+		    height: 0;
+		    border-top: 10px solid #1b76d1;
+		    border-left: 5px solid transparent;
+		    border-right: 5px solid transparent;
+		    top: 100%;
+		    left: 50%;
+		    margin-left: -5px;
+		    margin-top: -1px;
+		}
+
+
+		/************************* Radio Button *************************8*/
 		
 		
     </style>
@@ -170,10 +317,23 @@
 	  	</nav>
 
 	  	<!-- New Layout -->
+
+	  	<!------------------ sidebar ------------------------>
+	  	
+	  	
 	  	<div class="row" style="height: 93%; margin: 0px 0px 0px 0px;">
-		  	<div class="col-8" id="map">
-		 		<!--  style="border-radius: 5px; border: 1px solid black;"  -->	
+	  		
+	  		<!-- <div class="col-8 mapDiv" style="flex: 1;"> -->
+		  	<div class="col-8" id="map" style="">
+		  		<div class="leaflet-top leaflet-left" style="pointer-events: auto">
+	                <button type="button" id="sidebarCollapse" class="openbtn btn btn-info" onclick="openNav()" style="margin: 5px 0px 0px 5px;">
+	                	<a href="#" style="color: white;">&#9776;</a>
+	                </button>
+	            </div> 
+		 		
 		 	</div>
+		 	<!-- </div> -->
+		 	
 
 		 	<!-- Input layout -->
 		 	<div class="col-4">
@@ -196,8 +356,125 @@
 				 		<div class="col-2" style="margin-top: 3px;">
 				 			<input type="file" name="document" id="file" class="form-data">
 				 		</div>
-				 			}
+				 			
 			 		</div>
+
+			 		<!--------------------------- SidePanel Starts ----------------------->
+			 		<div id="mySidepanel" class="sidepanel" style="position: fixed; z-index: 999;">
+	  			
+			  			<div style="margin-bottom: 40px; text-align: center;">
+			  				<h3>Settings</h3>
+			  				<a href="javascript:void(0)" class="closebtn" onclick="closeNav()" style="font-size: 200%;">&#8592;</a>
+					  	</div>
+					  	
+					  <div style="margin-left: 10px;">
+					  	
+					  	<div class="row">
+						  	<h6 style="padding: 0px 6px 15px 13px;">Spatial Range</h6>
+						  	<p style="margin-bottom: 10px; font-size: 90%;">(In Meters)</p>
+						</div>
+					  	<div class="range-wrap" style="width: 90%;">
+					        <div class="range-value" id="rangeV1"></div>
+					        {% if "range1" in Controls %}
+					        	<input id="range1" name="range1" type="range" min="1" max="5" value="{{Controls.range1}}" step="1">
+					        {% else %}
+					        	<input id="range1" name="range1" type="range" min="1" max="5" value="4" step="1">
+					        {% endif %}
+					    </div>
+						
+					  </div>
+					  <hr>
+					  <div style="margin-left: 10px;">
+					  	<div class="row">
+						  	<h6 style="padding: 0px 6px 15px 13px;">Temporal Range</h6>
+						  	<p style="margin-bottom: 10px; font-size: 90%;">(In Minutes)</p>
+						</div>
+					  	<!-- <p>In Hours</p>
+					  	<div class="range-wrap" style="width: 90%;">
+					        <div class="range-value" id="rangeV2"></div>
+					        {% if "range2" in Controls %}
+					        <input id="range2" type="range" name="range2" min="0" max="5" value="{{Controls.range2}}" step="1">
+					        {% else %}
+					        <input id="range2" type="range" name="range2" min="0" max="5" value="0" step="1">
+					        {% endif %}
+					    </div>
+					    <br> -->
+					    <!-- <p>In Minutes</p> -->
+					    <div class="range-wrap" style="width: 90%;">
+					        <div class="range-value" id="rangeV3"></div>
+					        {% if "range3" in Controls %}
+					        <input id="range3" type="range" name="range3" min="0" max="10" value="{{Controls.range3}}" step="1">
+					        {% else %}
+					        <input id="range3" type="range" name="range3" min="0" max="10" value="10" step="1">
+					        {% endif %}
+					    </div>
+					  </div>
+					  <hr>
+					  <div style="margin-left: 10px;">
+					  	<h6>Exposure Level</h6>
+					  	
+					  	<div class="row" style="margin-left: 5px;">
+							<div class="custom-control custom-radio">
+							{% if "EL" in Controls and Controls.EL == "1" %}
+							  <input type="radio" class="custom-control-input" id="defaultUnchecked00" name="EL" checked value="1">
+							{%elif "EL" not in Controls %}
+							  <input type="radio" class="custom-control-input" id="defaultUnchecked00" name="EL" checked value="1">
+							{% else %}  
+							  <input type="radio" class="custom-control-input" id="defaultUnchecked00" name="EL" value="1">
+							{% endif %}
+							  <label class="custom-control-label" for="defaultUnchecked00">1</label>
+							</div>
+						  	
+							<div class="custom-control custom-radio" style="margin-left: 30px;">
+							{% if "EL" in Controls and Controls.EL == "2"  %}
+							  <input type="radio" class="custom-control-input" id="defaultChecked01" name="EL" checked value="2">
+							{% else %}
+							  <input type="radio" class="custom-control-input" id="defaultChecked01" name="EL" value="2">
+							{% endif %}
+							  <label class="custom-control-label" for="defaultChecked01">2</label>
+							</div>
+
+							<!-- <div class="custom-control custom-radio" style="margin-left: 20px;">
+							{% if "EL" in Controls and Controls.EL == "3" %}
+							  <input type="radio" class="custom-control-input" id="defaultUnchecked02" name="EL" checked value="3">
+							{% else %}
+							  <input type="radio" class="custom-control-input" id="defaultUnchecked02" name="EL" value="3">
+							{% endif %}
+							<label class="custom-control-label" for="defaultUnchecked02">3</label>
+							</div> -->
+						</div>
+					  </div>
+					  <hr>
+					  <div style="margin-left: 10px;">
+					  	<h6>Ranking Method</h6>
+					  	<div class="custom-control custom-radio">
+					  	{% if "RM" in Controls and Controls.RM == "EET" %}
+						  <input type="radio" class="custom-control-input" id="defaultUnchecked11" name="RM" checked  value="EET">
+						{% elif "RM" not in Controls %}
+						  <input type="radio" class="custom-control-input" id="defaultUnchecked11" name="RM" checked  value="EET">
+						{% else %}
+						  <input type="radio" class="custom-control-input" id="defaultUnchecked11" name="RM" value="EET">
+						{% endif %}
+						  <label class="custom-control-label" for="defaultUnchecked11">Earliest Exposure TimeStamp</label>
+						</div>
+					  	
+						<div class="custom-control custom-radio">
+						{% if "RM" in Controls and Controls.RM == "NOE" %}
+						  <input type="radio" class="custom-control-input" id="defaultChecked12" name="RM" checked value="NOE">
+						{% else %}
+						  <input type="radio" class="custom-control-input" id="defaultChecked12" name="RM" value="NOE">
+						{% endif %}
+
+						  <label class="custom-control-label" for="defaultChecked12">Number of Exposure</label>
+						</div>
+					  </div>
+					  	<div class="" style="margin: 10px 10px 5px 0px; float: right;">
+						  <!-- <input type="submit" class="btn btn-info" value="Done" onclick="closeNav()"> -->
+						</div> 
+					</div>
+
+ 
+
 			 		<div class="row" style="margin: 20px 0px 5px 20px;">
 			 			<button type="submit" class="btn btn-outline-info mobilitybtn" name="action" value="Mobility Trace" style="width: 90%; font-size: 90%; height: 90%;" title="Generate list of places the input user(s) have visited in the past 14 days"><i class="fa fa-refresh fa-spin mobilityitag" style="display: none; margin-right: 7px;"></i> Mobility Tracing</button>
 			 		</div>
@@ -226,13 +503,13 @@
 	 						{% if file_name == None %}
 		 						<tr>
 		 							<th><span title="Locations visited by input user">Location</span></th>
-		 							<th><span title="Total time spent in respective locations">Time Spent(hrs)</span></th>
+		 							<th><span title="Total time spent in respective locations">Time Spent</span></th>
 		 							<th><span title="Number of visits to respective locations">Freq</span></th>
 		 						</tr>
 		 					{% else %}
 		 						<tr>
 		 							<th><span title="Locations visited by input user">Location</span></th>
-		 							<th><span title="Total time spent in respective locations">Time Spent(hrs)</span></th>
+		 							<th><span title="Total time spent in respective locations">Time Spent</span></th>
 		 							<th><span title="Number of visits to respective locations">Freq</span></th>
 		 							<th><span title="No of People in that location">No of Persons</span></th>
 		 						</tr>
@@ -241,13 +518,17 @@
 
 	 							{% if file_name == None %}
 	 								<tr>
-	 									<th><span title="User ID that came in contact">Contacted User ID</span></th>
-	 									<th><span title="Total time spent with infected patients">Contact Time(hrs)</span></th>
+	 									<th><span title="Serial Number">Serial</span></th>
+	 									<th><span title="User ID that came in contact">Contacted UID</span></th>
+	 									<th><span title="Time at which User ID was first exposed">Exposure Moment</span></th>
+	 									<th><span title="No. of times User ID was exposed">Times Exposed</span></th>
 	 								</tr>
 	 							{% else %}
 	 								<tr>
-	 									<th><span title="User ID that came in contact">Contacted User ID</span></th>
-	 									<th><span title="Total time spent with infected patients">Contact Time(hrs)</span></th>
+	 									<th><span title="Serial Number">Serial</span></th>
+	 									<th><span title="User ID that came in contact">Contacted UID</span></th>
+	 									<th><span title="Time at which User ID was first exposed">Moment of Exposure</span></th>
+	 									<th><span title="No. of times User ID was exposed">Times Exposed</span></th>
 	 								</tr>
 	 							{% endif %}
 
@@ -260,24 +541,78 @@
 		 	</div>
 
 		 	<!-- Table -->
-
 	 	</div>
+	 	
+
+	 	<!-- <div class="overlay" id="overlayid"></div> -->
 	</div>
 
-
+	<!-- for sliders -->
 	<script>
+		const
+		    range1 = document.getElementById('range1'),
+		    rangeV1 = document.getElementById('rangeV1'),
+		    // range2 = document.getElementById('range2'),
+		    // rangeV2 = document.getElementById('rangeV2'),
+		    range3 = document.getElementById('range3'),
+		    rangeV3 = document.getElementById('rangeV3'),
+		    setValue = ()=>{
+		        const
+		            newValue1 = Number( (range1.value - range1.min) * 100 / (range1.max - range1.min) ),
+		            newPosition1 = 10 - (newValue1 * 0.2);
+		        rangeV1.innerHTML = `<span>${range1.value}</span>`;
+		        rangeV1.style.left = `calc(${newValue1}% + (${newPosition1}px))`;
+
+		        // const
+		        //     newValue2 = Number( (range2.value - range2.min) * 100 / (range2.max - range2.min) ),
+		        //     newPosition2 = 10 - (newValue2 * 0.2);
+		        // rangeV2.innerHTML = `<span>${range2.value}</span>`;
+		        // rangeV2.style.left = `calc(${newValue2}% + (${newPosition2}px))`;
+
+		        const
+		            newValue3 = Number( (range3.value - range3.min) * 100 / (range3.max - range3.min) ),
+		            newPosition3 = 10 - (newValue3 * 0.2);
+		        rangeV3.innerHTML = `<span>${range3.value}</span>`;
+		        rangeV3.style.left = `calc(${newValue3}% + (${newPosition3}px))`;
+		    };
+		document.addEventListener("DOMContentLoaded", setValue);
+		range1.addEventListener('input', setValue);
+		// range2.addEventListener('input', setValue);
+		range3.addEventListener('input', setValue)
+
+	</script>
+	
+
+	<script type="text/javascript">
 		$(document).ready(function(){
 			$(".mobilitybtn").click(function(){
 				$('.mobilityitag').show();
 			});
-		});
-
-		$(document).ready(function(){
 			$(".ctbtn").click(function(){
 				$('.ctitag').show();
 			});
+
+			$('#file').inputFileText({text:'Upload File'});
+
+
 		});
 
+		/* Set the width of the sidebar to 250px (show it) */
+		function openNav() {
+		  document.getElementById("mySidepanel").style.width = "270px";
+		  document.getElementById("sidebarCollapse").style.display = "none";
+		  // var d = document.getElementById("overlayid");
+		  // d.className += " active";
+		}
+
+		/* Set the width of the sidebar to 0 (hide it) */
+		function closeNav() {
+		  document.getElementById("mySidepanel").style.width = "0";
+		  setTimeout(function(){
+		  	document.getElementById("sidebarCollapse").style.display = "block";
+		  }, 370);
+		  
+		}
 	</script>
 
 
@@ -305,6 +640,7 @@
 	}
 	
 	</script>
+
 
 
 	<script>
@@ -347,8 +683,6 @@
 			}
 		}
 		
-
-		
 		localStorage.lastmode= "{{map_mode}}";
 		localStorage.lastuser= "{{inputinfo}}";
 		// console.log('lastmode', localStorage.lastmode, localStorage.myval);
@@ -357,12 +691,16 @@
 
 
   	<script>
-    	$(document).ready(function(){
-    		$('#file').inputFileText({text:'Upload File'});
-    	});
+    	// $(document).ready(function(){
+    	// 	$('#file').inputFileText({text:'Upload File'});
+    	// });
 
 
-      var map = L.map('map');
+      var map = L.map('map', {
+      	zoomControl: false
+      });
+      
+
       var group1 = L.featureGroup();
       if ('{{map_mode}}' == '{{""}}'){
       	map.setView([23.806695, 90.428535], 12);
@@ -380,7 +718,12 @@
 
 
       //add scale to map
-      L.control.scale().addTo(map);
+      L.control.scale({
+      	position: 'bottomright'
+      }).addTo(map);
+      L.control.zoom({
+      	position: 'bottomright'
+      }).addTo(map);
 
 
       if ('{{map_mode}}' == '{{"covid19trace"}}'){
@@ -404,7 +747,7 @@
 	      		fillOpacity: opacity,
 	      		radius: rad //50
 	      	}).addTo(map);
-	      	var strfreq = "Visited:" + freq.toString() + " times | " + count_traj[index][4].toString() + " hrs";
+	      	var strfreq = "Visited:" + freq.toString() + " times | " + count_traj[index][4].toString();// + " hrs";
 	      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strfreq);
 	      	circleref.bindPopup(circlepopup);
 	      	circleref.on('mouseover', function(evt){
@@ -417,7 +760,6 @@
 	      }
 	   }
   		
-
   		else if ('{{map_mode}}' == '{{"contact tracing"}}' && '{{file_name}}' == '{{None}}') {
   			var count_traj = JSON.parse("{{ count_traj | escapejs }}");
 		    var max_freq = "{{max_frequency}}";
@@ -427,22 +769,49 @@
 	      for (index=0; index < count_traj.length; index++){
 	      	lat = count_traj[index][0];
 	      	long = count_traj[index][1];
-	      	freq = count_traj[index][2];
+	      	exp_level = count_traj[index][2];
 	      	rad = count_traj[index][3];
 	      	timespent = count_traj[index][4];
 	      	uid = count_traj[index][5];
+	      	freq = count_traj[index][6];
+
 	      	rel_opacity = freq/max_freq;
 	      	if (rel_opacity < 0.1){ rel_opacity = 0.1}
 	      	else if (rel_opacity > 0.88) {rel_opacity = 0.88};
+
+	      	// if (exp_level == 3){
+	      	// 	// value_fillopacity = '#3ea383';
+	      	// 	// circle_color = '#1c9e75';
+	      	// 	value_fillopacity = '#35a4cc';
+	      	// 	circle_color = "#35a4cc";
+	      	// 	rad_factor = 1;
+	      	// }
+	      	// else if (exp_level == 2){
+	      	// 	// value_fillopacity = "#185f99";
+	      	// 	// circle_color = "#1208cc";
+	      	// 	value_fillopacity = '#e69007';
+	      	// 	circle_color = "#ff9d00";
+	      	// 	rad_factor = 1.15;
+	      	// }
+	      	// else if (exp_level == 1){
+	      	// 	value_fillopacity = '#6c259c';
+	      	// 	circle_color = "#4f0f94";
+	      	// 	rad_factor = 1.3;
+
+	      	// }
+
+	      	rad_factor = 1;
+	      	value_fillopacity = '#4aa4e8';
+	      	circle_color = '#3e6ff7';
 
 	      	if (uid == input_uid){ 
 		      	var circleref = L.circle([lat, long], {
 		      		color: 'red',
 		      		fillColor: "#e83535",
 		      		fillOpacity: rel_opacity,
-		      		radius: rad*1.1
+		      		radius: rad*1.05
 		      	}).addTo(group1);
-		      	var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString() + "hrs";
+		      	var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString();
 		      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strinfo);
 		      	circleref.bindPopup(circlepopup);
 		      	circleref.on('mouseover', function(evt){
@@ -454,12 +823,12 @@
 	      	}
 	      	else {
 	      		var circleref = L.circle([lat, long], {
-		      		color: 'blue',
-		      		fillColor: "#34a0ed",
-		      		fillOpacity: rel_opacity,
+		      		color: circle_color,
+		      		fillColor: value_fillopacity,
+		      		fillOpacity: rel_opacity, //rel_opacity,
 		      		radius: rad
 		      	}).addTo(group1);
-		      	var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString() + "hrs";
+		      	var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString();
 		      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strinfo);
 		      	circleref.bindPopup(circlepopup);
 		      	circleref.on('mouseover', function(evt){
@@ -474,19 +843,25 @@
 	      map.addLayer(group1);
 	      function getColor(d){ 
 	      		return d == 0 ? '#db2727':
-	      				d == 1 ? '#1e83f7':
+	      				d == 1 ? '#4aa4e8':
+	      				d==2 ? '#185f99':
+	      				d==3 ? '#6c259c':
 	      						'#4fb514';
 	      }
 	      //add legends
 	      var legend = L.control({position: 'topright'});
 	      legend.onAdd = function(map){
 	      	var div = L.DomUtil.create('div','info legend'),
-	      	grades = ["Covid Positive", "Contacted Persons"];
+	      	grades = [" Covid Positive", " Infected from Exposure", " Exposed Level 2", " Exposed Level 3"];
 	      	
 	      	//style of i: width:18px;height:18px;float:left;opacity:0.7;
-	      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(0) + ';"></i>' + grades[0] + '<br>';
-	      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(1) + ';"></i>' + grades[1];
+	      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(0) + ';margin-right:5px;"></i>' + grades[0] + '<br>';
+	      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(1) + ';margin-right:5px;margin-right:5px;"></i>' + grades[1] + '<br>'; 
 	      	return div;
+	      	// div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(2) + ';margin-right:5px;"></i>' + grades[2] + '<br>';
+	      	// //return div;
+	      	// div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(3) + ';margin-right:5px;"></i>' + grades[3];
+	      	// return div;
 	       };
 	       legend.addTo(map);
 
@@ -495,18 +870,38 @@
   			var count_traj = JSON.parse("{{ count_traj | escapejs }}");
   			var input_uids = JSON.parse("{{ input_uids | escapejs }}");
   			var max_freq = "{{max_frequency}}";
+  			console.log(input_uids);
   			
   			for (index=0; index < count_traj.length; index++){
 		      	lat = count_traj[index][0];
 		      	long = count_traj[index][1];
-		      	freq = count_traj[index][2];
+		      	exp_level = count_traj[index][2];
 		      	rad = count_traj[index][3];
 		      	timespent = count_traj[index][4];
 		      	uid = count_traj[index][5];
+		      	freq = count_traj[index][6];
+
 		      	puid = false;
 		      	rel_opacity = freq/max_freq;
 		      	if (rel_opacity < 0.1){ rel_opacity = 0.1}
 		      	else if (rel_opacity > 0.88) {rel_opacity = 0.88};
+
+		      	// if (exp_level == 1){
+		      	// 	value_fillopacity = '#3ea383';
+	      		// 	circle_color = '#1c9e75';
+		      	// }
+		      	// else if (exp_level == 2){
+		      	// 	value_fillopacity = "#185f99";
+		      	// 	circle_color = "#1208cc";
+		      	// }
+		      	// else if (exp_level==3){
+		      	// 	value_fillopacity = '#6c259c';
+		      	// 	circle_color = "#4f0f94";
+		      	// }
+
+		      	rad_factor = 1;
+		      	value_fillopacity = '#4aa4e8';
+		      	circle_color = '#3e6ff7';
 
 		      	for (i1=0; i1 < input_uids.length; i1 ++) {
 		      		if (uid == input_uids[i1]) {
@@ -520,9 +915,9 @@
 			      		color: 'red',
 			      		fillColor: "#e83535",
 			      		fillOpacity: rel_opacity,
-			      		radius: rad*1.1
+			      		radius: rad*1.05
 			      	}).addTo(group1);
-			      	var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString() + "hrs";
+			      	var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString();
 			      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strinfo);
 			      	circleref.bindPopup(circlepopup);
 			      	circleref.on('mouseover', function(evt){
@@ -534,12 +929,12 @@
 		      	}
 		      	else {
 		      		var circleref = L.circle([lat, long], {
-			      		color: 'blue',
-			      		fillColor: "#34a0ed",
+			      		color: circle_color,
+			      		fillColor: value_fillopacity,
 			      		fillOpacity: rel_opacity,
 			      		radius: rad
 			      	}).addTo(group1);
-			      	var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString() + "hrs";
+			      	var strinfo = "ID: " + uid.toString() + " | Duration in Location: " + timespent.toString();
 			      	var circlepopup = L.popup({offset:L.point(0,-5)}).setContent(strinfo);
 			      	circleref.bindPopup(circlepopup);
 			      	circleref.on('mouseover', function(evt){
@@ -553,37 +948,30 @@
 	      	map.addLayer(group1);
 	      	function getColor(d){ 
 	      		return d == 0 ? '#db2727':
-	      				d == 1 ? '#1e83f7':
+	      				d == 1 ? '#4aa4e8':
+	      				d==2 ? '#185f99':
+	      				d==3 ? '#6c259c':
 	      						'#4fb514';
 		      }
 		      //add legends
 		      var legend = L.control({position: 'topright'});
 		      legend.onAdd = function(map){
 		      	var div = L.DomUtil.create('div','info legend'),
-		      	grades = ["Covid Positive", "Contacted Persons"];
+		      	grades = [" Covid Positive", " Infected from Exposure", " Exposed Level 2", " Exposed Level 3"];
 		      	
 		      	//style of i: width:18px;height:18px;float:left;opacity:0.7;
-		      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(0) + ';"></i>' + grades[0] + '<br>';
-		      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(1) + ';"></i>' + grades[1];
-		      	return div;
+		      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(0) + ';margin-right:5px;"></i>' + grades[0] + '<br>';
+		      	div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(1) + ';margin-right:5px;"></i>' + grades[1] + '<br>';
+			      	return div;
+		      	// div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(2) + ';margin-right:5px;"></i>' + grades[2] + '<br>';
+		      	// //return div;
+		      	// div.innerHTML += '<i style="width:16px;height:16px;float:left;opacity:0.7;background:' + getColor(3) + ';margin-right:5px;"></i>' + grades[3];
+		      	// return div;
 		       };
 		       legend.addTo(map);
 		      	
   		}
 
-  		// if ('{{map_mode}}' != '{{""}}'){
-  		// 	//add legends
-	   //    var legend = L.control({position: 'topright'});
-	   //    legend.onAdd = function(map){
-	   //    	var div = L.DomUtil.create('div','info legend'),
-	   //    	grades = ["1hr : 6metres"]; 
-	   //    	//style of i: width:18px;height:18px;float:left;opacity:0.7;
-	   //    	div.innerHTML += '<div style="border: 2px solid black; font-size:105%; margin-right:20px;">' + grades[0] + '</div> <br>';
-	      	
-	   //    	return div;
-	   //     };
-	   //     legend.addTo(map);
-  		// }
     </script>
 
 
@@ -620,7 +1008,7 @@
 				    		{'data': "Time Spent"},
 				    		{'data': "Frequency"},
 				    	],
-				    	'order':[[1,'desc']]
+				    	'order':[[2,'desc']]
 				    });
 					
 				});
@@ -643,7 +1031,7 @@
 				    		{'data': "Frequency"},
 				    		{'data': "PersonNo"}
 				    	],
-				    	'order':[[1,'desc']]
+				    	'order':[[2,'desc']]
 				    });
 					
 				});
@@ -663,10 +1051,17 @@
 				    	},
 
 				    	'columns': [
+				    		{'data': 'Serial'},
 				    		{'data': "ID"},
-				    		{'data': "TimeSpent"}
+				    		{'data': "ExposedMoment"},
+				    		{'data': "ExposedNo"}
 				    	],
-				    	'order':[[1,'desc']]
+				    	'order':[[0,'asc']],
+
+				    	"columnDefs": [{
+				    		"targets": [0],
+				    		"visible": false
+				    	}]
 				    });
 				    
 				    var table = $('#exampletable').DataTable();
@@ -693,11 +1088,18 @@
 				    	},
 
 				    	'columns': [
+				    		{'data': 'Serial'},
 				    		{'data': "ID"},
-				    		{'data': "TimeSpent"}
+				    		{'data': "ExposedMoment"},
+				    		{'data': "ExposedNo"}
 				    		// {'data': "NumberContacted"}
 				    	],
-				    	'order':[[1,'desc']]
+				    	'order':[[0,'asc']], 
+
+				    	"columnDefs": [{
+				    		"targets": [0],
+				    		"visible": false
+				    	}]
 				    });
 
 				    var table = $('#exampletable').DataTable();
@@ -715,6 +1117,19 @@
 		
 		
 	</script>
+
+
+<!-- jQuery -->
+  <!-- <script type="text/javascript" src="media/js/jquery.min.js"></script> -->
+  <!-- Bootstrap tooltips -->
+  <script type="text/javascript" src="media/js/popper.min.js"></script>
+  <!-- Bootstrap core JavaScript -->
+  <script type="text/javascript" src="media/js/bootstrap.min.js"></script>
+  <!-- MDB core JavaScript -->
+  <script type="text/javascript" src="media/js/mdb.min.js"></script>
+  <!-- Your custom scripts (optional) -->
+  <script type="text/javascript"></script>
+
 
 
 </body>

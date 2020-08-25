@@ -51,6 +51,28 @@
 	  font-weight: bold;
 	  color: #363636; 
 	}
+
+	li {
+		font-size: 103%;
+	}
+
+	table {
+	  font-family: arial, sans-serif;
+	  border-collapse: collapse;
+	  width: 100%;
+	  margin-top: 20px;
+	}
+
+	td, th {
+	  border: 1px solid #dddddd;
+	  text-align: center;
+	  padding: 8px;
+	}
+
+	tr:nth-child(even) {
+	  background-color: #ebebeb;
+	}
+
     </style>
  
 	<title>BUET Contact Tracing</title>
@@ -79,47 +101,130 @@
 
 
   	<div class="col-12 textclass">
-  		<h2 style="margin-bottom: 10px;">Objective</h2>
-  		<p>To be able to trace Contact and Mobility of Covid-19 patients.</p>
+  		<h2 style="margin-bottom: 12px;">Objective</h2>
+  		<!-- <p>The objective of this website is to trace Contact and Mobility of Covid-19 patients.</p> -->
   		<p>
-		The main objective of this system is to support the Contact Tracing of Covid-19 patients. The contract tracing essentially finds users who have come in direct contact with a Covid-19 patient or who are in contact with other users who have already been in contact with the Covid-19 patient.
-		</p>
-		<p>
-			The assumption is we have a database of all users' Mobility data collected by the telecommunication companies. All the mobile numbers are anonymized using a distinct anonymous ID.
+		The main objective of this system is to support the contact tracing of patients of infectious diseases (e.g., COVID-19, MERS etc.). The contact tracing essentially finds users who have come in direct contact with an infected user (e.g., Covid-19 patient) or who are in contact with other users who have already been in contact earlier with the patient.
 		</p>
 
-		<h2 style="margin-top: 30px;">Mobility Tracing</h2>
+		<!-- <p>
+			The assumption is we have a database of all users' mobility data collected by the telecommunication companies. All the mobile numbers are anonymized using a distinct anonymous ID. Henceforth, anonymous ID and user ID will mean the same thing.
+		</p> -->
+		<br>
+		<h2 style="margin-bottom: 12px;">Reference</h2>
+			<p>
+				<ul>
+					<li>
+						This demonstration is based on our research on efficient indexing techniques for the contact tracing query. The technical report can be found at <a href="https://arxiv.org/abs/2006.12812">arXiv</a>.
+					</li>
+					<li>
+						A demonstration paper has been recently accepted in <a href="https://sigspatial2020.sigspatial.org">ACM SIGSPATIAL 2020</a>.
+					</li>
+				</ul>
+			</p>
+
+		<br>
 		
-		<ul>
-			<li>Enter a User Id into the input box to see which places this person visited in the last 14 days. The query also shows time spent and frequency of visits to each distinct location. </li>
-			
-			<div class="transbox">
-				<p style="font-size: 98%;">Enter "AAH03JAAQAAAO9VAAI" or "AAH03JAAQAAAO9VAAN" in the input box and click "Mobility Tracing" button. The map will show the locations visited by the user and the table will show relevant details.</p>
-			</div>
-			
-			<li>Hovering over the circles will show details for that location.</li>
-			<li>The interface also has the functionality of querying the mobility trace of a group of people by uploading a CSV file containing a list of User Ids. The <a href="/media/help/Upload.csv" download="Upload.csv" >CSV</a> file contains a list of User IDs, one ID in a row. </li>
-		</ul>
+		<h2 style="margin-bottom: 12px;">Dataset</h2>
+		<p>
+			We have used mobility trace data of mobile users of the largest telecommunication operator in Bangladesh. Thus the database we used in this demonstration contains spatio-temporal traces (location, time-stamp) of all users collected by the telecommunication company through mobile GPRS. All the mobile numbers are anonymized using a distinct anonymous ID. Henceforth, anonymous ID and user ID will mean the same thing.
+		</p>
 
+
+
+		<!-- <h2 style="margin-top: 30px;">List of Possible IDs</h2>
+		<table style="width:50%;margin-left:5px;">
+		  <tr>
+		    <th>Anonymous User ID</th>
+		    <th>Number of Distinct Locations Visited</th>
+		  </tr>
+		  <tr>
+		    <td>AAH03JABeAANU12AIc</td>
+		    <td>4</td>
+		  </tr>
+		  <tr>
+		    <td>AAH03JABeAANU2cAk1</td>
+		    <td>2</td>
+		  </tr>
+		  <tr>
+		    <td>AAH03JABeAANU2eAVS</td>
+		    <td>2</td>
+		  </tr>
+		  <tr>
+		    <td>AAH03JABeAANU2eAaq</td>
+		    <td>2</td>
+		  </tr>
+		  <tr>
+		    <td>AAH03JABeAANU2eAgS</td>
+		    <td>2</td>
+		  
+		</table> -->
+
+		<!-- <br> -->
 
 		<h2 style="margin-top: 30px">Contact Tracing</h2>
 		<ul>
-			<li>Enter a User Id of a Covid-19 patient to see his/her contact trace, i.e. the persons the patient came in contact with. The query returns all the contacted persons’ User IDs and time spent with the patient. </li>
+			<li>Enter a User Id of an infected patient (e.g., a COVID-19 patient) to see his/her contact trace, i.e. the persons the patient came in contact with. The query returns all the contacted persons’ User IDs, moment of first exposure and number of times the user was exposed.</li>
 
 			<div class="transbox">
-				<p style="font-size: 98%;">Enter "AAH03JAAQAAAO9VAAE" or "AAH03JAAQAAAO9VAAa" in the input box and click "Contact Tracing" button. The map and table will show relevant information about the people that came in contact with the input user.</p> 
+				<p style="font-size: 98%;">Enter "AAH03JABeAANU12AIc" or "AAH03JABeAANU2eAaq" in the input box and click "Contact Tracing" button. The map and table will show relevant information about the people that came in contact with the input user in default settings of query parameters.</p> 
 			</div>
 			
-			<li>Hovering over a circle will show the associated UID.</li>
+			<li>Hovering over a circle will show the associated user ID.</li>
+			<li>Some more example user IDs are as follows (Table 1)</li>
+
+			<table style="width:50%;margin-left:5px; margin-bottom: 25px;">
+			  <tr>
+			    <th>Anonymous User ID</th>
+			    <th>Number of Distinct Locations Visited</th>
+			  </tr>
+			  <tr>
+			    <td>AAH03JABeAANU12AIc</td>
+			    <td>4</td>
+			  </tr>
+			  <tr>
+			    <td>AAH03JABeAANU2cAk1</td>
+			    <td>2</td>
+			  </tr>
+			  <tr>
+			    <td>AAH03JABeAANU2eAVS</td>
+			    <td>2</td>
+			  </tr>
+			  <tr>
+			    <td>AAH03JABeAANU2eAaq</td>
+			    <td>2</td>
+			  </tr>
+			  <tr>
+			    <td>AAH03JABeAANU2eAgS</td>
+			    <td>2</td>
+			  
+			</table>
+
+			<li>You can click the top-left button to access the Settings panel, modify the configurable query parameters and click "Contact Tracing" button to see updated results.</li>
 			<li>The interface also has the capabilities of querying about a number of patients via a <a download="Upload.csv" href="/media/help/Upload.csv">CSV</a> file.</li>
 			<li>You can also select on a row in the table to better identify the selected user in the map.</li>
 		</ul>
 
+
+
+		<h2 style="margin-top: 30px;">Mobility Tracing</h2>
+		
+		<ul>
+			<li>Enter a User Id into the input box to see which places this person visited in the last 7 days. The query also shows time spent and frequency of visits to each distinct location. </li>
+			
+			<div class="transbox">
+				<p style="font-size: 98%;">Enter "AAH03JABeAANU12AIc" or "AAH03JABeAANU2eAaq" in the input box and click "Mobility Tracing" button. The map will show the locations visited by the user and the table will show relevant details.</p>
+			</div>
+			
+			<li>Hovering over the circles will show details for that location. You can also try other users as depicted in Table 1.</li>
+			<li>The interface also has the functionality of querying the mobility trace of a group of people by uploading a CSV file containing a list of User Ids. The <a href="/media/help/Upload.csv" download="Upload.csv" >CSV</a> file contains a list of User IDs, separated by commas. </li>
+		</ul>
+
 		<h2 style="margin-top: 30px;">HeatMap</h2>
-		<p>Shows a heatmap of visited places by all the Covid19 infected persons present in the database. The places where higher frequency of visits are present will have more opaque circles in appearance.</p>
+		<p>Shows a heatmap of visited places by all the already infected persons present in the database. The places where higher frequency of visits are present will have more opaque circles in appearance.</p>
 
 		<h2 style="margin-top: 30px;">Technical Details</h2>
-		<p>The contact tracing of a Covid-19 patient is challenging as they encounter lots of other users in their journey for the last 14 days. We assume that we have access to the mobility traces of all users in the system. Now, when a new Covid-19 patient is identified, we first search for his (or her) mobility traces in the database using his id (e.g., mobile phone number). After finding his mobility trace as a sequence of (location, time) pairs, we need to find who are other users whose (location, time) pair matches with any of the (location, time) pairs of the Covid-19 patient. Having a database of size in terabytes containing the mobility traces of millions of users for the last 14 days, it is a daunting task to find such a match. A brute-force approach to solve this problem requires hours to find the contact trace of a single patient. We develop a hierarchical multi-level index, namely QR-tree that can efficiently find matches between users and the Covid-19 patient. </p>
+		<p>The contact tracing of a virus infected person (e.g., a Covid-19 patient) is challenging as they encounter lots of other users in their journey for the last 14 days. We assume that we have access to the mobility traces of all users in the system. Now, when a new Covid-19 patient is identified, we first search for his (or her) mobility traces in the database using his/her id (e.g., mobile phone number). After finding his/her mobility trace as a sequence of (location, time) pairs, we need to find who are other users whose (location, time) pair matches with any of the (location, time) pairs of the Covid-19 patient. Having a database of size in terabytes containing the mobility traces of millions of users for the last 14 days, it is a daunting task to find such a match. A traditional approach using existing spatio-temporal indexes, e.g., 3DR-tree, to solve this problem requires hours to find the contact trace of a single patient. We develop a hierarchical multi-level index, namely QzR-tree that can efficiently find matches between users and the virus infected patient. Please see the <a href="https://arxiv.org/abs/2006.12812">technical report</a> for details. </p>
 
 
 		<h2 style="margin-top: 30px;">Privacy Policy</h2>
@@ -127,29 +232,33 @@
 		<p>The system has broadly two authorization levels for now: 
 
 		<ul>
-			<li>Tracers: These users have the access to trace and analyze  mobility/contact given anonymous IDs. These users are never shown any identification information (e.g., mobile number) about the users.</li>
+			<li>Tracers: These users have the access to trace and analyze mobility/contact given anonymous IDs. These users are never shown any identification information (e.g., mobile number) about the users.</li>
 			<li>Code Breaker: These users have the access to code-decode between mobile numbers and their anonymous IDs. Each such coding/decoding query is logged and subject to review by the central authority. These users also DO NOT have access to the query interfaces and MUST not have any access to a separate tracer account.</li>
 		</ul>
-
 		</p>
 
 		<h2 style="margin-top: 30px">Notes</h2>
 		<p>
 			<ul>
-				<li>The radius of the circle at any location is determined by the cumulative time spent at that location. For example, if the total time spent at a location is 1 hour, then the radius of the circle is 3 meters; if 2 hours, radius is 6 meters and so on. For example, when I input “01701234504” for Mobility Tracing, then the red circle in the map at Swamibag indicates that approximately 5 hours have been spent there making the radius of the circle 15 meters.</li>
-				<li>On the other hand, Opacity of a circle is determined by the Number of Visits to that location. More visits to a location will make the circle more opaque.</li>
+				<li>The radius of a circle at any location proportionally increases with the cumulative time spent at that location.</li>
+				<li>On the other hand, opacity of a circle is determined by the number of visits to that location. More visits to a location will make the circle more opaque.</li>
+			</ul>
+		</p>
+
+		<h2 style="margin-top: 30px;">Team Members</h2>
+		<p>
+			<ul>
+				<li style="font-size: 120%;">Dr. Mohammed Eunus Ali, CSE, BUET</li>
+				<li>Shadman Saqib Eusuf, CSE, BUET</li>
+				<li>Kazi Ashik Islam, University of Virginia, USA</li>
+				<li>Sifat Muhammad Abdullah, CSE, BUET</li>
+				<li>Abdus Salam Azad, University of California, Berkeley</li>
 			</ul>
 		</p>
 
   	</div>
-
-
-
   
   </div>
-
-
-
 
 
 </body>
